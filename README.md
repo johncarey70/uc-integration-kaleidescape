@@ -26,7 +26,7 @@ Supported **remote** UI:
 
 ### Setup
 
-- If you want to try this, install via upload uc-intg-kaleidescap-aarch64.tar.gz in Integrations.
+- If you want to try this, install via upload uc-intg-kaleidescape-aarch64.tar.gz in Integrations.
 
 
 ## License
