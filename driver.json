@@ -1,0 +1,46 @@
+{
+  "driver_id": "kaleidescape",
+  "version": "0.0.1",
+  "min_core_api": "0.20.0",
+  "name": { "en": "Kaleidescape" },
+  "icon": "uc:integration",
+  "description": {
+    "en": "Integration to control a Kaleidescape Video Player."
+  },
+  "port": 9085,
+  "developer": {
+    "name": "John J Carey",
+    "email": "",
+    "url": "https://www.github.com/johncarey70"
+  },
+  "home_page": "https://www.unfoldedcircle.com",
+  "release_date": "2025-05-18",
+  "setup_data_schema": {
+    "title": {
+      "en": "Integration Setup"
+    },
+    "settings": [
+      {
+        "id": "note",
+        "label": {
+          "en": "Notes"
+        },
+        "field": { "label": { "value": {
+            "en": "By clicking on next an attempt is made to automatically find the Kaleidescape Player in your local network.\nIf the player is not on the local subnet or discovery fails you need to activate the manual setup."
+            } }
+        }
+      },
+      {  
+        "id": "manual",
+        "label": {
+          "en": "Manual Setup"
+        },
+        "field": {
+          "checkbox": {
+            "value": false
+            }
+        }
+      }
+    ]
+  }
+}
