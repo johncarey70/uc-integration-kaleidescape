@@ -108,7 +108,12 @@ class KaleidescapeRemote(Remote):
 
         status = StatusCodes.BAD_REQUEST  # Default fallback
 
-        match str(cmd_id):
+        try:
+            cmd = Commands(cmd_id)
+        except ValueError:
+            return StatusCodes.NOT_IMPLEMENTED
+
+        match cmd:
             case Commands.ON:
                 _LOG.debug("Got On.............")
                 try:
