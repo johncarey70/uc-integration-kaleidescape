@@ -8,8 +8,9 @@ Sensor entity functions.
 import logging
 from typing import Any
 
-from player import KaleidescapeInfo
 from ucapi.sensor import Attributes, DeviceClasses, Options, Sensor, States
+
+from device import KaleidescapeInfo
 
 _LOG = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ class KaleidescapeSensor(Sensor):
 
         """
         entity_id = f"{sensor}.{info.id}"
-        name = "Kaleidescape " + sensor.replace("_", " ").title()
+        name = "Kscape " + sensor.replace("_", " ").title()
 
         attributes = {
             Attributes.STATE: States.UNKNOWN,

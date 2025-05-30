@@ -23,7 +23,8 @@ from json import JSONDecodeError
 from typing import Iterator
 
 import ucapi
-from player import KaleidescapeInfo as Info
+
+from device import KaleidescapeInfo as Info
 
 _LOG = logging.getLogger(__name__)
 

@@ -1,13 +1,4 @@
-"""
-Defines constant enumerations used for Kaleidescape remote and media player control.
-
-Includes:
-- `SimpleCommands`: Enum mapping human-readable command names to Kaleidescape-specific remote commands.
-  Covers numeric inputs, aspect ratio changes, navigation, power control, and more.
-- Designed for use with `ucapi`-based entity integration modules (e.g., remote, media_player).
-
-These constants provide a unified interface for issuing commands across UC integrations.
-"""
+"""Defines constant enumerations used for Kaleidescape remote and media player control."""
 
 
 from enum import Enum
@@ -27,6 +18,7 @@ class EntityPrefix(str, Enum):
 class SimpleCommands(str, Enum):
     """Enumeration of supported remote command names for Kaleidescape control."""
 
+    CANCEL = "cancel"
     DOWN = "down"
     EXIT = "exit"
     INPUT = "input"
@@ -34,12 +26,17 @@ class SimpleCommands(str, Enum):
     NEXT = "next"
     OK = "select"
     ON = "power_on"
+    MENU = "menu_toggle"
     PAUSE = "pause"
     PLAY = "play"
     PLAY_PAUSE = "play_pause"
-    PREV = "prev"
+    PREVIOUS = "previous"
+    REPLAY = "replay"
     RIGHT = "right"
     SAVE = "save"
+    SELECT = "select"
+    SCAN_FORWARD = "scan_forward"
+    SCAN_REVERSE = "scan_reverse"
     STBY = "standby"
     STOP = "stop"
     UP = "up"

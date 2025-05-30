@@ -4,20 +4,21 @@
 import logging
 from typing import Any
 
-import config
 import ucapi
+from ucapi.media_player import Attributes as MediaAttr
+from ucapi.media_player import States
+from ucapi.sensor import Attributes as SensorAttr
+
+import config
 from api import api, loop
 from const import EntityPrefix
+from device import Events, KaleidescapeInfo, KaleidescapePlayer
 from media_player import KaleidescapeMediaPlayer
-from player import Events, KaleidescapeInfo, KaleidescapePlayer
 from registry import (all_devices, clear_devices, connect_all, disconnect_all,
                       get_device, register_device, unregister_device)
 from remote import REMOTE_STATE_MAPPING, KaleidescapeRemote
 from sensor import KaleidescapeSensor
 from setup_flow import driver_setup_handler
-from ucapi.media_player import Attributes as MediaAttr
-from ucapi.media_player import States
-from ucapi.sensor import Attributes as SensorAttr
 from utils import setup_logger
 
 _LOG = logging.getLogger("driver")

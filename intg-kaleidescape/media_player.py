@@ -8,11 +8,12 @@ Media-player entity functions.
 import logging
 from typing import Any
 
-from const import MediaPlayerDef, SimpleCommands
-from player import KaleidescapeInfo, KaleidescapePlayer
 from ucapi import MediaPlayer, StatusCodes
 from ucapi.media_player import (Attributes, Commands, DeviceClasses, Options,
                                 States)
+
+from const import MediaPlayerDef, SimpleCommands
+from device import KaleidescapeInfo, KaleidescapePlayer
 
 _LOG = logging.getLogger(__name__)
 
@@ -32,7 +33,7 @@ class KaleidescapeMediaPlayer(MediaPlayer):
         }
         super().__init__(
             entity_id,
-            mp_info.friendly_name,
+            f"{mp_info.friendly_name} Media Player",
             features,
             attributes,
             device_class=DeviceClasses.STREAMING_BOX,

@@ -6,7 +6,7 @@ Used to store and retrieve device connections by device ID.
 
 from typing import Dict, Iterator
 
-from player import KaleidescapePlayer
+from device import KaleidescapePlayer
 
 _configured_players: Dict[str, KaleidescapePlayer] = {}
 

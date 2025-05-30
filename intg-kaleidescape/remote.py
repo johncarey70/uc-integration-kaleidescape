@@ -8,15 +8,16 @@ Remote entity functions.
 import logging
 from typing import Any
 
-from const import RemoteDef
-from const import SimpleCommands as cmds
-from player import KaleidescapeInfo, KaleidescapePlayer
 from ucapi import StatusCodes
 from ucapi.media_player import Attributes as MediaAttributes
 from ucapi.media_player import States as MediaStates
-from ucapi.remote import Attributes, Commands, Remote, States
+from ucapi.remote import Attributes, Commands, EntityCommand, Remote, States
 from ucapi.ui import (Buttons, DeviceButtonMapping, Size, UiPage,
                       create_btn_mapping, create_ui_text)
+
+from const import RemoteDef
+from const import SimpleCommands as cmds
+from device import KaleidescapeInfo, KaleidescapePlayer
 
 _LOG = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class KaleidescapeRemote(Remote):
         attributes = RemoteDef.attributes
         super().__init__(
             entity_id,
-            info.friendly_name,
+            f"{info.friendly_name} Remote",
             features,
             attributes,
             simple_commands=RemoteDef.simple_commands,
@@ -75,19 +76,23 @@ class KaleidescapeRemote(Remote):
             create_btn_mapping(Buttons.DPAD_LEFT, cmds.LEFT.value),
             create_btn_mapping(Buttons.DPAD_RIGHT, cmds.RIGHT.value),
             create_btn_mapping(Buttons.DPAD_MIDDLE, cmds.OK.value),
-            create_btn_mapping(Buttons.PREV, cmds.PREV.value),
+            create_btn_mapping(Buttons.PREV, cmds.PREVIOUS.value),
             create_btn_mapping(Buttons.PLAY, cmds.PLAY_PAUSE.value),
             create_btn_mapping(Buttons.NEXT, cmds.NEXT.value),
-
-            {"button": "POWER", "short_press": {"cmd_id": "remote.toggle"}},
-            {"button": "STOP", "short_press": {"cmd_id": "stop"}},
+            create_btn_mapping(Buttons.POWER, Commands.TOGGLE.value),
+            DeviceButtonMapping(
+                button="MENU",
+                short_press=EntityCommand(cmd_id="menu_toggle", params=None), long_press=None),
+            DeviceButtonMapping(
+                button="STOP",
+                short_press=EntityCommand(cmd_id="stop", params=None), long_press=None),
         ]
 
     def create_ui(self) -> list[UiPage | dict[str, Any]]:
         """Create a user interface with different pages that includes all commands"""
 
         ui_page1 = UiPage("page1", "Power", grid=Size(6, 6))
-        ui_page1.add(create_ui_text("Power On", 2, 0, size=Size(6, 1), cmd=Commands.ON))
+        ui_page1.add(create_ui_text("Power On", 0, 0, size=Size(6, 1), cmd=Commands.ON))
         ui_page1.add(create_ui_text("Standby", 0, 5, size=Size(6, 1), cmd=Commands.OFF))
 
         return [ui_page1]
@@ -100,51 +105,55 @@ class KaleidescapeRemote(Remote):
         :param params: Optional dictionary of parameters associated with the command
         :return: Status code indicating the result of the command execution
         """
-        if params is None:
-            _LOG.info("Received Remote command request: %s - no parameters", cmd_id)
-            params = {}
-        else:
-            _LOG.info("Received Remote command request: %s with parameters: %s", cmd_id, params)
+        params = params or {}
+
+        simple_cmd: str | None = params.get("command")
+        if simple_cmd and simple_cmd.startswith("remote"):
+            cmd_id = simple_cmd.split(".")[1]
+
+        _LOG.info(
+            "Received Remote command request: %s with parameters: %s",
+            cmd_id, params or "no parameters")
+
 
         status = StatusCodes.BAD_REQUEST  # Default fallback
 
         try:
             cmd = Commands(cmd_id)
+            _LOG.debug("Resolved command: %s", cmd)
         except ValueError:
-            return StatusCodes.NOT_IMPLEMENTED
-
-        match cmd:
-            case Commands.ON:
-                _LOG.debug("Got On.............")
-                try:
+            status = StatusCodes.NOT_IMPLEMENTED
+        else:
+            match cmd:
+                case Commands.ON:
                     status = await self._device.power_on()
-                except Exception as exc:
-                    _LOG.error(exc)
-                    status = StatusCodes.SERVER_ERROR
 
-            case Commands.OFF:
-                _LOG.debug("Got Off.............")
-                status = await self._device.power_off()
+                case Commands.OFF:
+                    status = await self._device.power_off()
 
-            case Commands.TOGGLE:
-                _LOG.debug("Got toggle.............")
-                status = StatusCodes.OK
+                case Commands.TOGGLE:
+                    status = await self._device.power_toggle()
 
-            case Commands.SEND_CMD:
-                raw = params.get("command")
-                if raw is None:
-                    _LOG.warning("Missing 'command' parameter in SEND_CMD")
-                    status = StatusCodes.BAD_REQUEST
-                else:
-                    try:
-                        cmd = cmds(raw)
-                        if cmd == cmds.PLAY_PAUSE:
+                case Commands.SEND_CMD:
+                    if not simple_cmd:
+                        _LOG.warning("Missing command in SEND_CMD")
+                        status = StatusCodes.BAD_REQUEST
+                    elif simple_cmd in (cmd.value for cmd in cmds):
+                        actual_cmd = None
+
+                        if simple_cmd == cmds.PLAY_PAUSE:
                             status = await self._device.play_pause()
                         else:
-                            status = await self._device.send_command(cmd.value)
-                    except ValueError:
-                        _LOG.warning("Invalid SEND_CMD command: %s", raw)
-                        status = StatusCodes.BAD_REQUEST
+                            actual_cmd = simple_cmd
+
+                        if actual_cmd:
+                            status = await self._device.send_command(actual_cmd)
+                    else:
+                        _LOG.warning("Unknown command: %s", simple_cmd)
+                        status = StatusCodes.NOT_IMPLEMENTED
+
+                case _:
+                    status = StatusCodes.NOT_IMPLEMENTED
 
         return status
 
@@ -163,7 +172,8 @@ class KaleidescapeRemote(Remote):
             new_state: States = REMOTE_STATE_MAPPING.get(media_state, States.UNKNOWN)
 
             # Check if the state has changed from the current remote state
-            if Attributes.STATE not in self.attributes or self.attributes[Attributes.STATE] != new_state:
+            if (Attributes.STATE not in self.attributes or
+                self.attributes[Attributes.STATE]) != new_state:
                 attributes[Attributes.STATE] = new_state
 
         _LOG.debug("LumagenRemote update attributes %s -> %s", update, attributes)

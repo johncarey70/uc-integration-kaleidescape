@@ -13,7 +13,8 @@ import time
 import xml.etree.ElementTree as ET
 
 import requests
-from player import KaleidescapeInfo
+
+from device import KaleidescapeInfo
 
 _LOG = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "min_core_api": "0.20.0",
   "name": { "en": "Kaleidescape" },
-  "icon": "uc:integration",
+  "icon": "custom:kaleidescape.png",
   "description": {
     "en": "Integration to control a Kaleidescape Video Player."
   },
