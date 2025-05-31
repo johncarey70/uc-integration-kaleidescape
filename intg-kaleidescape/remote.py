@@ -8,16 +8,15 @@ Remote entity functions.
 import logging
 from typing import Any
 
+from const import RemoteDef
+from const import SimpleCommands as cmds
+from device import KaleidescapeInfo, KaleidescapePlayer
 from ucapi import StatusCodes
 from ucapi.media_player import Attributes as MediaAttributes
 from ucapi.media_player import States as MediaStates
 from ucapi.remote import Attributes, Commands, EntityCommand, Remote, States
 from ucapi.ui import (Buttons, DeviceButtonMapping, Size, UiPage,
                       create_btn_mapping, create_ui_text)
-
-from const import RemoteDef
-from const import SimpleCommands as cmds
-from device import KaleidescapeInfo, KaleidescapePlayer
 
 _LOG = logging.getLogger(__name__)
 

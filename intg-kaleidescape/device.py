@@ -9,20 +9,18 @@ from enum import IntEnum
 from typing import Any
 
 import ucapi
+from const import EntityPrefix
 from kaleidescape import Device as KaleidescapeDevice
 from kaleidescape import KaleidescapeError
-from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON, DEVICE_POWER_STATE_STANDBY, SYSTEM_READINESS_STATE,
+from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
+                                DEVICE_POWER_STATE_STANDBY,
                                 PLAY_STATUS_PLAYING, STATE_CONNECTED,
                                 STATE_DISCONNECTED, STATE_RECONNECTING)
 from pyee.asyncio import AsyncIOEventEmitter
 from ucapi.media_player import Attributes as MediaAttr
 from ucapi.media_player import States as MediaStates
-from ucapi.remote import Attributes as RemoteAttr
-from ucapi.remote import States as RemoteStates
 from ucapi.sensor import Attributes as SensorAttr
 from ucapi.sensor import States as SensorStates
-
-from const import EntityPrefix
 
 _LOG = logging.getLogger(__name__)
 
@@ -126,15 +124,6 @@ class KaleidescapePlayer:
 
         try:
             await self.device.connect()
-            # await self.device.refresh()
-            # self.events.emit(Events.CONNECTED.name, self.device_id)
-            # _LOG.debug("Power state is currently: %s", self.device.power.state)
-            # if self.device.power.state == DEVICE_POWER_STATE_ON:
-            #     self._attr_state = MediaStates.ON
-            # elif self.device.power.state == DEVICE_POWER_STATE_STANDBY:
-            #     self._attr_state = MediaStates.STANDBY
-            # else:
-            #     self._attr_state = MediaStates.UNKNOWN
 
         except (KaleidescapeError, ConnectionError) as err:
             await self.device.disconnect()
@@ -230,9 +219,9 @@ class KaleidescapePlayer:
         """Handle device connection state changes based on incoming event."""
         if event == "":
             return
-        _LOG.debug("Received Event: %s............................................", event)
+        _LOG.debug("Received Event: %s...........................", event)
+        _LOG.debug("Power State = %s", self.state)
         handlers = {
-            SYSTEM_READINESS_STATE: self._handle_system_readiness_state,
             DEVICE_POWER_STATE: self._handle_power_state,
             DeviceState.CONNECTED: self._handle_connected,
             DeviceState.DISCONNECTED: self._handle_disconnected,
@@ -293,9 +282,6 @@ class KaleidescapePlayer:
             EntityPrefix.MEDIA_PLAYER.value, MediaAttr.STATE, self.state)
         await self._emit_update(
             EntityPrefix.REMOTE.value, MediaAttr.STATE, self.state)
-
-    async def _handle_system_readiness_state(self):
-        self._attr_state
 
     async def _handle_events(self, event: str):
         _LOG.debug("Event received: %s", event)

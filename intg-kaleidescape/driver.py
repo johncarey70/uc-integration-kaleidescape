@@ -4,12 +4,8 @@
 import logging
 from typing import Any
 
-import ucapi
-from ucapi.media_player import Attributes as MediaAttr
-from ucapi.media_player import States
-from ucapi.sensor import Attributes as SensorAttr
-
 import config
+import ucapi
 from api import api, loop
 from const import EntityPrefix
 from device import Events, KaleidescapeInfo, KaleidescapePlayer
@@ -19,6 +15,9 @@ from registry import (all_devices, clear_devices, connect_all, disconnect_all,
 from remote import REMOTE_STATE_MAPPING, KaleidescapeRemote
 from sensor import KaleidescapeSensor
 from setup_flow import driver_setup_handler
+from ucapi.media_player import Attributes as MediaAttr
+from ucapi.media_player import States
+from ucapi.sensor import Attributes as SensorAttr
 from utils import setup_logger
 
 _LOG = logging.getLogger("driver")
@@ -228,13 +227,13 @@ def _register_available_entities(info: KaleidescapeInfo, device: KaleidescapePla
             api.available_entities.remove(entity.id)
         api.available_entities.add(entity)
 
-    # for sensor in [EntityPrefix.MEDIA_LOCATION, EntityPrefix.PLAY_SPEED, EntityPrefix.PLAY_STATUS]:
-    #     entity = KaleidescapeSensor(info, sensor.value)
+    for sensor in [EntityPrefix.MEDIA_LOCATION, EntityPrefix.PLAY_SPEED, EntityPrefix.PLAY_STATUS]:
+        entity = KaleidescapeSensor(info, sensor.value)
 
-    #     if api.available_entities.contains(entity.id):
-    #         api.available_entities.remove(entity.id)
+        if api.available_entities.contains(entity.id):
+            api.available_entities.remove(entity.id)
 
-    #     api.available_entities.add(entity)
+        api.available_entities.add(entity)
 
 async def on_kaleidescape_connected(device_id: str):
     """Handle Kaleidescape connection."""

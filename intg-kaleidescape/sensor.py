@@ -8,9 +8,8 @@ Sensor entity functions.
 import logging
 from typing import Any
 
-from ucapi.sensor import Attributes, DeviceClasses, Options, Sensor, States
-
 from device import KaleidescapeInfo
+from ucapi.sensor import Attributes, DeviceClasses, Options, Sensor, States
 
 _LOG = logging.getLogger(__name__)
 
