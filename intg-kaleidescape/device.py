@@ -11,7 +11,7 @@ from typing import Any
 import ucapi
 from kaleidescape import Device as KaleidescapeDevice
 from kaleidescape import KaleidescapeError
-from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
+from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON, DEVICE_POWER_STATE_STANDBY, SYSTEM_READINESS_STATE,
                                 PLAY_STATUS_PLAYING, STATE_CONNECTED,
                                 STATE_DISCONNECTED, STATE_RECONNECTING)
 from pyee.asyncio import AsyncIOEventEmitter
@@ -75,7 +75,6 @@ class KaleidescapeInfo:
         """
         return json.dumps(asdict(self), indent=indent, sort_keys=sort_keys)
 
-
 class KaleidescapePlayer:
     """Handles communication with a Kaleidescape Player over TCP."""
 
@@ -97,7 +96,7 @@ class KaleidescapePlayer:
 
         # Device management and communication
         self.events = AsyncIOEventEmitter(self._event_loop)
-        self.device.dispatcher.connect(self.device_event)
+        self.device.dispatcher.connect(self._on_event)
 
     @property
     def attributes(self) -> dict[str, any]:
@@ -127,14 +126,15 @@ class KaleidescapePlayer:
 
         try:
             await self.device.connect()
-            await self.device.refresh()
-            self.events.emit(Events.CONNECTED.name, self.device_id)
-            _LOG.debug("Power state is currently: %s", self.device.power.state)
-            self._emit_update(
-                EntityPrefix.MEDIA_PLAYER.value,
-                self.device_id,
-                {MediaAttr.STATE: self.device.power.state}
-            )
+            # await self.device.refresh()
+            # self.events.emit(Events.CONNECTED.name, self.device_id)
+            # _LOG.debug("Power state is currently: %s", self.device.power.state)
+            # if self.device.power.state == DEVICE_POWER_STATE_ON:
+            #     self._attr_state = MediaStates.ON
+            # elif self.device.power.state == DEVICE_POWER_STATE_STANDBY:
+            #     self._attr_state = MediaStates.STANDBY
+            # else:
+            #     self._attr_state = MediaStates.UNKNOWN
 
         except (KaleidescapeError, ConnectionError) as err:
             await self.device.disconnect()
@@ -180,7 +180,7 @@ class KaleidescapePlayer:
         _LOG.debug("Power %s skipped: Device is already %s.", action, self.device.power.state)
 
     async def power_toggle(self) -> ucapi.StatusCodes:
-        """Toggle the power state of the Lumagen device."""
+        """Toggle the power state of the Kaleidescape device."""
         if self.is_on:
             await self.power_off()
         else:
@@ -226,12 +226,13 @@ class KaleidescapePlayer:
             await self.media_play()
         return ucapi.StatusCodes.OK
 
-    async def device_event(self, event: str):
+    async def _on_event(self, event: str):
         """Handle device connection state changes based on incoming event."""
         if event == "":
             return
         _LOG.debug("Received Event: %s............................................", event)
         handlers = {
+            SYSTEM_READINESS_STATE: self._handle_system_readiness_state,
             DEVICE_POWER_STATE: self._handle_power_state,
             DeviceState.CONNECTED: self._handle_connected,
             DeviceState.DISCONNECTED: self._handle_disconnected,
@@ -242,12 +243,21 @@ class KaleidescapePlayer:
         await handler()
 
     async def _handle_connected(self):
-        _LOG.debug("player connected")
         self._connected = True
         self.events.emit(Events.CONNECTED.name, self.device_id)
+
+        await asyncio.sleep(1)
+
+        if self.device.power.state == DEVICE_POWER_STATE_ON:
+            self._attr_state = MediaStates.ON
+        elif self.device.power.state == DEVICE_POWER_STATE_STANDBY:
+            self._attr_state = MediaStates.STANDBY
+        else:
+            self._attr_state = MediaStates.UNKNOWN
+
         updates = {
-                EntityPrefix.MEDIA_PLAYER: (MediaAttr.STATE, self.device.power.state),
-                EntityPrefix.REMOTE: (RemoteAttr.STATE, RemoteStates.ON),
+                EntityPrefix.MEDIA_PLAYER: (MediaAttr.STATE, self.state),
+                EntityPrefix.REMOTE: (MediaAttr.STATE, self.state),
                 EntityPrefix.MEDIA_LOCATION: (SensorAttr.STATE, SensorStates.ON),
                 EntityPrefix.PLAY_STATUS: (SensorAttr.STATE, SensorStates.ON),
                 EntityPrefix.PLAY_SPEED: (SensorAttr.STATE, SensorStates.ON),
@@ -270,10 +280,29 @@ class KaleidescapePlayer:
 
     async def _handle_power_state(self):
         _LOG.debug("Power State = %s", self.device.power.state)
-        self._emit_update(EntityPrefix.MEDIA_PLAYER.value, MediaAttr.STATE, self.device.power.state)
+        #await asyncio.sleep(1)
+
+        if self.device.power.state == DEVICE_POWER_STATE_ON:
+            self._attr_state = MediaStates.ON
+        elif self.device.power.state == DEVICE_POWER_STATE_STANDBY:
+            self._attr_state = MediaStates.STANDBY
+        else:
+            self._attr_state = MediaStates.UNKNOWN
+
+        await self._emit_update(
+            EntityPrefix.MEDIA_PLAYER.value, MediaAttr.STATE, self.state)
+        await self._emit_update(
+            EntityPrefix.REMOTE.value, MediaAttr.STATE, self.state)
+
+    async def _handle_system_readiness_state(self):
+        self._attr_state
 
     async def _handle_events(self, event: str):
         _LOG.debug("Event received: %s", event)
+        await self._emit_update(
+            EntityPrefix.MEDIA_PLAYER.value, MediaAttr.STATE, self.state)
+        await self._emit_update(
+            EntityPrefix.REMOTE.value, MediaAttr.STATE, self.state)
         await self._emit_update(
             EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_IMAGE_URL, self.device.movie.cover)
         await self._emit_update(
@@ -281,12 +310,12 @@ class KaleidescapePlayer:
         await self._emit_update(
             EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_TYPE, self.device.movie.media_type)
         await self._emit_update(
-            EntityPrefix.MEDIA_LOCATION.value,
-            SensorAttr.VALUE, self.device.automation.movie_location)
-        await self._emit_update(
             EntityPrefix.PLAY_SPEED.value, SensorAttr.VALUE, str(self.device.movie.play_speed))
         await self._emit_update(
             EntityPrefix.PLAY_STATUS.value, SensorAttr.VALUE, self.device.movie.play_status)
+        await self._emit_update(
+            EntityPrefix.MEDIA_LOCATION.value,
+            SensorAttr.VALUE, self.device.automation.movie_location)
 
     async def _emit_update(self, prefix: str, attr: str, value: Any) -> None:
         entity_id = f"{prefix}.{self.device_id}"

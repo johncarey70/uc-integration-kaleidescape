@@ -77,6 +77,6 @@ class RemoteDef: # pylint: disable=too-few-public-methods
         remote.Features.SEND_CMD,
     ]
     attributes = {
-        remote.Attributes.STATE: remote.States.ON,
+        remote.Attributes.STATE: remote.States.UNKNOWN,
     }
     simple_commands = list(SimpleCommands)

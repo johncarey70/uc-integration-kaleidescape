@@ -22,14 +22,14 @@ def setup_logger():
 
     level = os.getenv("UC_LOG_LEVEL", "DEBUG").upper()
 
-    #logging.getLogger("ucapi.api").setLevel(level)
-    #logging.getLogger("ucapi.entities").setLevel(level)
-    #logging.getLogger("ucapi.entity").setLevel(level)
+    logging.getLogger("ucapi.api").setLevel(level)
+    logging.getLogger("ucapi.entities").setLevel(level)
+    logging.getLogger("ucapi.entity").setLevel(level)
     logging.getLogger("driver").setLevel(level)
     logging.getLogger("config").setLevel(level)
     logging.getLogger("discover").setLevel(level)
     logging.getLogger("setup_flow").setLevel(level)
-    logging.getLogger("player").setLevel(level)
+    logging.getLogger("device").setLevel(level)
     logging.getLogger("remote").setLevel(level)
     logging.getLogger("media_player").setLevel(level)
     logging.getLogger("registry").setLevel(level)

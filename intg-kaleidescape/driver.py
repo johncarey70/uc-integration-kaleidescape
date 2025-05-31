@@ -144,6 +144,7 @@ def _update_entity_attributes(entity_id: str, entity, attributes: dict):
     """
     Update attributes for the given entity based on its type.
     """
+    _LOG.debug("Updating %s for %s", entity, attributes)
     if isinstance(entity, KaleidescapeMediaPlayer):
         api.configured_entities.update_attributes(entity_id, attributes)
     elif isinstance(entity, KaleidescapeRemote):
@@ -227,13 +228,13 @@ def _register_available_entities(info: KaleidescapeInfo, device: KaleidescapePla
             api.available_entities.remove(entity.id)
         api.available_entities.add(entity)
 
-    for sensor in [EntityPrefix.MEDIA_LOCATION, EntityPrefix.PLAY_SPEED, EntityPrefix.PLAY_STATUS]:
-        entity = KaleidescapeSensor(info, sensor.value)
+    # for sensor in [EntityPrefix.MEDIA_LOCATION, EntityPrefix.PLAY_SPEED, EntityPrefix.PLAY_STATUS]:
+    #     entity = KaleidescapeSensor(info, sensor.value)
 
-        if api.available_entities.contains(entity.id):
-            api.available_entities.remove(entity.id)
+    #     if api.available_entities.contains(entity.id):
+    #         api.available_entities.remove(entity.id)
 
-        api.available_entities.add(entity)
+    #     api.available_entities.add(entity)
 
 async def on_kaleidescape_connected(device_id: str):
     """Handle Kaleidescape connection."""

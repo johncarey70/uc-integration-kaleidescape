@@ -106,8 +106,8 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 if update[key] != self.attributes[key]:
                     attributes[key] = update[key]
 
-        if attributes.get(Attributes.STATE) == States:
+        if attributes.get(Attributes.STATE) == States.OFF:
             attributes[Attributes.SOURCE] = ""
 
-        _LOG.debug("LumagenMediaPlayer update attributes %s -> %s", update, attributes)
+        _LOG.debug("Kaleidescape MediaPlayer update attributes %s -> %s", update, attributes)
         return attributes

@@ -169,12 +169,17 @@ class KaleidescapeRemote(Remote):
         if MediaAttributes.STATE in update:
             media_state = update[MediaAttributes.STATE]
 
-            new_state: States = REMOTE_STATE_MAPPING.get(media_state, States.UNKNOWN)
+            try:
+                media_state_enum = MediaStates(media_state)
+            except ValueError:
+                _LOG.warning("Unknown media_state value: %s", media_state)
+                media_state_enum = MediaStates.UNKNOWN
 
-            # Check if the state has changed from the current remote state
-            if (Attributes.STATE not in self.attributes or
-                self.attributes[Attributes.STATE]) != new_state:
+            new_state: States = REMOTE_STATE_MAPPING.get(media_state_enum, States.UNKNOWN)
+            current_state = self.attributes.get(Attributes.STATE)
+
+            if current_state != new_state:
                 attributes[Attributes.STATE] = new_state
 
-        _LOG.debug("LumagenRemote update attributes %s -> %s", update, attributes)
+        _LOG.debug("Kaleidescape Remote update attributes %s -> %s", update, attributes)
         return attributes

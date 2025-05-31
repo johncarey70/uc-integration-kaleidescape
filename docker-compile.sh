@@ -42,7 +42,7 @@ echo "Working in local temp dir: $TMPDIR"
 
 # Copy necessary files only
 cp -R "$INTG_DIR" "$TMPDIR/"
-cp driver.json requirements.txt "$TMPDIR/"
+cp driver.json requirements.txt assets/kaleidescape.png "$TMPDIR/"
 
 pushd "$TMPDIR" > /dev/null
 
@@ -60,6 +60,7 @@ mkdir -p "$STAGING_DIR/bin"
 mv dist/"$INTG_DIR"/* "$STAGING_DIR/bin/"
 mv "$STAGING_DIR/bin/$INTG_DIR" "$STAGING_DIR/bin/driver"
 cp driver.json "$STAGING_DIR/"
+cp kaleidescape.png "$STAGING_DIR/"
 tar czf "$ARCHIVE_NAME" -C "$STAGING_DIR" .
 
 # Copy archive back
