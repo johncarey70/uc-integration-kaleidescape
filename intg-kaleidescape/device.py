@@ -3,11 +3,12 @@
 import asyncio
 import json
 import logging
+import socket
 from asyncio import AbstractEventLoop
 from dataclasses import asdict, dataclass
 from enum import IntEnum
 from typing import Any
-import socket
+
 import ucapi
 from const import EntityPrefix
 from kaleidescape import Device as KaleidescapeDevice
@@ -217,13 +218,12 @@ class KaleidescapePlayer:
 
     async def intermission_toggle(self) -> ucapi.StatusCodes:
         """Send intermission_toggle command."""
-        _LOG.debug("Sending Intermission")
-        message = '01/1/INTERMISSION_TOGGLE:\r'
+        message = "01/1/INTERMISSION_TOGGLE:\r"
         port = 10000
         timeout = 2  # seconds
 
         with socket.create_connection((self.host, port), timeout=timeout) as sock:
-            sock.sendall(message.encode('utf-8'))
+            sock.sendall(message.encode("utf-8"))
 
         return ucapi.StatusCodes.OK
 

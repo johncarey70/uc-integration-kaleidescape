@@ -47,14 +47,7 @@ class MediaPlayerDef: # pylint: disable=too-few-public-methods
     Defines a media player entity including supported features, attributes, and
     a list of simple commands.
     """
-    # features = [
-    #     media_player.Features.ON_OFF,
-    #     media_player.Features.TOGGLE,
-    #     media_player.Features.PLAY_PAUSE,
-    #     media_player.Features.STOP,
-    #     media_player.Features.NEXT,
-    #     media_player.Features.PREVIOUS,
-    # ]
+
     features = []
     attributes = {
     media_player.Attributes.MEDIA_DURATION: "",
