@@ -43,6 +43,7 @@ VALID_COMMANDS = frozenset({
     "scan_reverse",
     "select",
     "up",
+    "intermission",
 })
 
 class KaleidescapeRemote(Remote):
@@ -91,9 +92,14 @@ class KaleidescapeRemote(Remote):
         """Create a user interface with different pages that includes all commands"""
 
         ui_page1 = UiPage("page1", "Power", grid=Size(6, 6))
-        ui_page1.add(create_ui_text("Power On", 0, 0, size=Size(6, 1), cmd=Commands.ON))
-        ui_page1.add(create_ui_text("Standby", 0, 5, size=Size(6, 1), cmd=Commands.OFF))
+        ui_page1.add(create_ui_text("Power On", 0, 0, size=Size(3, 1), cmd=Commands.ON))
+        ui_page1.add(create_ui_text("Standby", 3, 0, size=Size(3, 1), cmd=Commands.OFF))
 
+        ui_page1.add(create_ui_text("Menu", 1, 2, size=Size(4, 1), cmd=cmds.MENU.value))
+        ui_page1.add(create_ui_text("Stop", 0, 3, size=Size(3, 1), cmd=cmds.STOP.value))
+        ui_page1.add(create_ui_text("Cancel", 3, 3, size=Size(3, 1), cmd=cmds.CANCEL.value))
+
+        ui_page1.add(create_ui_text("Intermission", 1, 4, size=Size(4, 1), cmd=cmds.INTERMISSION.value))
         return [ui_page1]
 
     async def command(self, cmd_id: str, params: dict[str, Any] | None = None) -> StatusCodes:
@@ -142,6 +148,8 @@ class KaleidescapeRemote(Remote):
 
                         if simple_cmd == cmds.PLAY_PAUSE:
                             status = await self._device.play_pause()
+                        elif simple_cmd == cmds.INTERMISSION:
+                            status = await self._device.intermission_toggle()
                         else:
                             actual_cmd = simple_cmd
 

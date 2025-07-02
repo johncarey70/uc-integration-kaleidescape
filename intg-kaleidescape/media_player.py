@@ -25,11 +25,13 @@ class KaleidescapeMediaPlayer(MediaPlayer):
         entity_id = f"media_player.{mp_info.id}"
         features = MediaPlayerDef.features
         attributes = MediaPlayerDef.attributes
-        self.simple_commands = [*SimpleCommands]
+        #self.simple_commands = [*SimpleCommands]
 
-        options = {
-            Options.SIMPLE_COMMANDS: self.simple_commands
-        }
+        # options = {
+        #     Options.SIMPLE_COMMANDS: self.simple_commands
+        # }
+        options = {}
+
         super().__init__(
             entity_id,
             f"{mp_info.friendly_name} Media Player",
