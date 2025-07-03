@@ -11,8 +11,7 @@ from typing import Any
 from const import MediaPlayerDef
 from device import KaleidescapeInfo, KaleidescapePlayer
 from ucapi import MediaPlayer, StatusCodes
-from ucapi.media_player import (Attributes, Commands, DeviceClasses,
-                                States)
+from ucapi.media_player import Attributes, Commands, DeviceClasses, States
 
 _LOG = logging.getLogger(__name__)
 

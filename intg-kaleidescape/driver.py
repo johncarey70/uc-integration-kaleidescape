@@ -7,17 +7,14 @@ from typing import Any
 import config
 import ucapi
 from api import api, loop
-from const import EntityPrefix
 from device import Events, KaleidescapeInfo, KaleidescapePlayer
 from media_player import KaleidescapeMediaPlayer
 from registry import (all_devices, clear_devices, connect_all, disconnect_all,
                       get_device, register_device, unregister_device)
 from remote import REMOTE_STATE_MAPPING, KaleidescapeRemote
-from sensor import KaleidescapeSensor
 from setup_flow import driver_setup_handler
 from ucapi.media_player import Attributes as MediaAttr
 from ucapi.media_player import States
-from ucapi.sensor import Attributes as SensorAttr
 from utils import setup_logger
 
 _LOG = logging.getLogger("driver")
@@ -97,42 +94,6 @@ async def on_subscribe_entities(entity_ids: list[str]) -> None:
         _LOG.debug("entity id = %s", entity_id)
         entity = api.configured_entities.get(entity_id)
         if not entity:
-            continue
-
-        # Handle Kaleidescape Sensor entities
-        if isinstance(entity, KaleidescapeSensor):
-            _LOG.info("Setting initial state of Kaleidescape Sensor %s", entity_id)
-
-            if entity_id.startswith(EntityPrefix.MEDIA_LOCATION.value):
-                api.configured_entities.update_attributes(
-                    entity_id,
-                    {
-                        SensorAttr.STATE: States.ON,
-                        SensorAttr.VALUE: device.device.movie.title_location,
-                        SensorAttr.UNIT: ""
-                    }
-                )
-            elif entity_id.startswith(EntityPrefix.PLAY_SPEED.value):
-                api.configured_entities.update_attributes(
-                    entity_id,
-                    {
-                        SensorAttr.STATE: States.ON,
-                        SensorAttr.VALUE: str(device.device.movie.play_speed),
-                        SensorAttr.UNIT: ""
-                    }
-                )
-            elif entity_id.startswith(EntityPrefix.PLAY_STATUS.value):
-                api.configured_entities.update_attributes(
-                    entity_id,
-                    {
-                        SensorAttr.STATE: States.ON,
-                        SensorAttr.VALUE: device.device.movie.play_status,
-                        SensorAttr.UNIT: ""
-                    }
-                )
-
-            current_value = entity.attributes.get(SensorAttr.VALUE, "unknown")
-            _LOG.info("Updated Kaleidescape Sensor entity %s with value %s", entity_id, current_value)
             continue
 
         # Handle media_player or remote entities
@@ -227,14 +188,6 @@ def _register_available_entities(info: KaleidescapeInfo, device: KaleidescapePla
             api.available_entities.remove(entity.id)
         api.available_entities.add(entity)
 
-    for sensor in [EntityPrefix.MEDIA_LOCATION, EntityPrefix.PLAY_SPEED, EntityPrefix.PLAY_STATUS]:
-        entity = KaleidescapeSensor(info, sensor.value)
-
-        if api.available_entities.contains(entity.id):
-            api.available_entities.remove(entity.id)
-
-        api.available_entities.add(entity)
-
 async def on_kaleidescape_connected(device_id: str):
     """Handle Kaleidescape connection."""
     _LOG.debug("Kaleidescape connected: %s", device_id)
@@ -274,7 +227,7 @@ async def on_kaleidescape_update(entity_id: str, update: dict[str, Any] | None) 
 
     _LOG.debug("[%s] Kaleidescape update: %s", device_id, update)
 
-    entity: KaleidescapeMediaPlayer | KaleidescapeRemote | KaleidescapeSensor | None = api.configured_entities.get(entity_id)
+    entity: KaleidescapeMediaPlayer | KaleidescapeRemote | None = api.configured_entities.get(entity_id)
     if entity is None:
         _LOG.debug("Entity %s not found", entity_id)
         return

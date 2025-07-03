@@ -11,9 +11,6 @@ class EntityPrefix(str, Enum):
 
     MEDIA_PLAYER = "media_player"
     REMOTE = "remote"
-    MEDIA_LOCATION = "media_location"
-    PLAY_SPEED = "play_speed"
-    PLAY_STATUS = "play_status"
 
 class SimpleCommands(str, Enum):
     """Enumeration of supported remote command names for Kaleidescape control."""
@@ -25,7 +22,7 @@ class SimpleCommands(str, Enum):
     LEFT = "left"
     NEXT = "next"
     OK = "select"
-    ON = "power_on"
+    #ON = "power_on"
     MENU = "menu_toggle"
     PAUSE = "pause"
     PLAY = "play"
@@ -37,7 +34,7 @@ class SimpleCommands(str, Enum):
     SELECT = "select"
     SCAN_FORWARD = "scan_forward"
     SCAN_REVERSE = "scan_reverse"
-    STBY = "standby"
+    #STBY = "standby"
     STOP = "stop"
     UP = "up"
     INTERMISSION = "intermission"
@@ -68,7 +65,6 @@ class RemoteDef: # pylint: disable=too-few-public-methods
     """
     features = [
         remote.Features.ON_OFF,
-        remote.Features.TOGGLE,
         remote.Features.SEND_CMD,
     ]
     attributes = {

@@ -79,7 +79,6 @@ class KaleidescapeRemote(Remote):
             create_btn_mapping(Buttons.PREV, cmds.PREVIOUS.value),
             create_btn_mapping(Buttons.PLAY, cmds.PLAY_PAUSE.value),
             create_btn_mapping(Buttons.NEXT, cmds.NEXT.value),
-            create_btn_mapping(Buttons.POWER, Commands.TOGGLE.value),
             DeviceButtonMapping(
                 button="MENU",
                 short_press=EntityCommand(cmd_id="menu_toggle", params=None), long_press=None),

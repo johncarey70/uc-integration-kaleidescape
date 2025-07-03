@@ -20,8 +20,7 @@ from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
 from pyee.asyncio import AsyncIOEventEmitter
 from ucapi.media_player import Attributes as MediaAttr
 from ucapi.media_player import States as MediaStates
-from ucapi.sensor import Attributes as SensorAttr
-from ucapi.sensor import States as SensorStates
+#from ucapi.sensor import Attributes as SensorAttr
 
 _LOG = logging.getLogger(__name__)
 
@@ -117,6 +116,7 @@ class KaleidescapePlayer:
 
     async def connect(self) -> bool:
         """Establish a connection to the device."""
+        _LOG.debug("Connecting to player")
         if self._connected:
             _LOG.debug("Already connected to Player at %s", self.host)
             return True
@@ -135,6 +135,7 @@ class KaleidescapePlayer:
 
     async def disconnect(self):
         """Close the connection cleanly, if not already disconnecting."""
+        _LOG.debug("Disconnecting from player")
         await self.device.disconnect()
 
     async def send_command(self, command: str) -> ucapi.StatusCodes:
@@ -168,14 +169,6 @@ class KaleidescapePlayer:
     def _log_power_state_skip(self, action: str):
         """Log when a power action is skipped because the device is already in the target state."""
         _LOG.debug("Power %s skipped: Device is already %s.", action, self.device.power.state)
-
-    async def power_toggle(self) -> ucapi.StatusCodes:
-        """Toggle the power state of the Kaleidescape device."""
-        if self.is_on:
-            await self.power_off()
-        else:
-            await self.power_on()
-        return ucapi.StatusCodes.OK
 
     async def media_pause(self) -> ucapi.StatusCodes:
         """Send pause command."""
@@ -259,9 +252,6 @@ class KaleidescapePlayer:
         updates = {
                 EntityPrefix.MEDIA_PLAYER: (MediaAttr.STATE, self.state),
                 EntityPrefix.REMOTE: (MediaAttr.STATE, self.state),
-                EntityPrefix.MEDIA_LOCATION: (SensorAttr.STATE, SensorStates.ON),
-                EntityPrefix.PLAY_STATUS: (SensorAttr.STATE, SensorStates.ON),
-                EntityPrefix.PLAY_SPEED: (SensorAttr.STATE, SensorStates.ON),
             }
 
         for prefix, (attr, value) in updates.items():
@@ -281,7 +271,6 @@ class KaleidescapePlayer:
 
     async def _handle_power_state(self):
         _LOG.debug("Power State = %s", self.device.power.state)
-        #await asyncio.sleep(1)
 
         if self.device.power.state == DEVICE_POWER_STATE_ON:
             self._attr_state = MediaStates.ON
@@ -307,13 +296,6 @@ class KaleidescapePlayer:
             EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_TITLE, self.device.movie.title)
         await self._emit_update(
             EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_TYPE, self.device.movie.media_type)
-        await self._emit_update(
-            EntityPrefix.PLAY_SPEED.value, SensorAttr.VALUE, str(self.device.movie.play_speed))
-        await self._emit_update(
-            EntityPrefix.PLAY_STATUS.value, SensorAttr.VALUE, self.device.movie.play_status)
-        await self._emit_update(
-            EntityPrefix.MEDIA_LOCATION.value,
-            SensorAttr.VALUE, self.device.automation.movie_location)
 
     async def _emit_update(self, prefix: str, attr: str, value: Any) -> None:
         entity_id = f"{prefix}.{self.device_id}"
