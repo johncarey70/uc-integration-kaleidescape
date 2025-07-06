@@ -20,6 +20,7 @@ from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
 from pyee.asyncio import AsyncIOEventEmitter
 from ucapi.media_player import Attributes as MediaAttr
 from ucapi.media_player import States as MediaStates
+
 #from ucapi.sensor import Attributes as SensorAttr
 
 _LOG = logging.getLogger(__name__)

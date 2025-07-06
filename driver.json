@@ -1,8 +1,10 @@
 {
   "driver_id": "kaleidescape",
-  "version": "0.0.1",
+  "version": "0.0.4",
   "min_core_api": "0.20.0",
-  "name": { "en": "Kaleidescape" },
+  "name": {
+    "en": "Kaleidescape"
+  },
   "icon": "custom:kaleidescape.png",
   "description": {
     "en": "Integration to control a Kaleidescape Video Player."
@@ -25,12 +27,15 @@
         "label": {
           "en": "Notes"
         },
-        "field": { "label": { "value": {
-            "en": "By clicking on next an attempt is made to automatically find the Kaleidescape Player in your local network.\nIf the player is not on the local subnet or discovery fails you need to activate the manual setup."
-            } }
+        "field": {
+          "label": {
+            "value": {
+              "en": "By clicking on next an attempt is made to automatically find the Kaleidescape Player in your local network.\nIf the player is not on the local subnet or discovery fails you need to activate the manual setup."
+            }
+          }
         }
       },
-      {  
+      {
         "id": "manual",
         "label": {
           "en": "Manual Setup"
@@ -38,7 +43,7 @@
         "field": {
           "checkbox": {
             "value": false
-            }
+          }
         }
       }
     ]

@@ -59,8 +59,6 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 res = await self._device.power_on()
             case Commands.OFF:
                 res = await self._device.power_off()
-            case Commands.TOGGLE:
-                res = await self._device.power_toggle()
             case Commands.PLAY_PAUSE:
                 if self._device.is_on:
                     res = await self._device.play_pause()

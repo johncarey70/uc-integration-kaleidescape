@@ -1,24 +1,12 @@
 # Kaleidescape Integration for Unfolded Circle Remote Two/3
 
-**Disclaimer**: Use at your own risk. This integration is currently **untested** and in active development. It has not yet been verified with real hardware still awaiting delivery of the R3 Remote.
-
 This integration driver allows control of a **Kaleidescape Video Player** device. A media player and remote entity are exposed to the Remote Two/3 core.
 
-Supported **media player** attributes:
-
-- State (active, standby, unknown)
-
-Supported **media player** commands:
-
-- Power on
-- Power off
-- Toggle power
 
 Supported **remote** UI:
 
 - Power on
 - Power off
-- Toggle power
 - Directional pad
 - Numeric keypad
 

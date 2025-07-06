@@ -135,9 +135,6 @@ class KaleidescapeRemote(Remote):
                 case Commands.OFF:
                     status = await self._device.power_off()
 
-                case Commands.TOGGLE:
-                    status = await self._device.power_toggle()
-
                 case Commands.SEND_CMD:
                     if not simple_cmd:
                         _LOG.warning("Missing command in SEND_CMD")
