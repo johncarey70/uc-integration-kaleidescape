@@ -26,4 +26,7 @@ build/
 # Project-specific
 config.json
 .old/
-.save/
+intg-kaleidescape/save/
+scripts/*
+Makefile
+assets/
