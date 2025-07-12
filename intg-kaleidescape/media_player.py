@@ -8,10 +8,11 @@ Media-player entity functions.
 import logging
 from typing import Any
 
-from const import MediaPlayerDef
-from device import KaleidescapeInfo, KaleidescapePlayer
 from ucapi import MediaPlayer, StatusCodes
 from ucapi.media_player import Attributes, Commands, DeviceClasses, States
+
+from const import MediaPlayerDef
+from device import KaleidescapeInfo, KaleidescapePlayer
 
 _LOG = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ class KaleidescapeMediaPlayer(MediaPlayer):
             case Commands.OFF:
                 res = await self._device.power_off()
             case Commands.PLAY_PAUSE:
+                _LOG.debug("Sending Play/Pause")
                 if self._device.is_on:
                     res = await self._device.play_pause()
                 else:

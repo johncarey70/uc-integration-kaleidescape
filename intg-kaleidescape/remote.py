@@ -8,15 +8,16 @@ Remote entity functions.
 import logging
 from typing import Any
 
-from const import RemoteDef
-from const import SimpleCommands as cmds
-from device import KaleidescapeInfo, KaleidescapePlayer
 from ucapi import StatusCodes
 from ucapi.media_player import Attributes as MediaAttributes
 from ucapi.media_player import States as MediaStates
 from ucapi.remote import Attributes, Commands, EntityCommand, Remote, States
 from ucapi.ui import (Buttons, DeviceButtonMapping, Size, UiPage,
                       create_btn_mapping, create_ui_text)
+
+from const import RemoteDef
+from const import SimpleCommands as cmds
+from device import KaleidescapeInfo, KaleidescapePlayer
 
 _LOG = logging.getLogger(__name__)
 
@@ -71,20 +72,20 @@ class KaleidescapeRemote(Remote):
     def create_button_mappings(self) -> list[DeviceButtonMapping | dict[str, Any]]:
         """Create button mappings."""
         return [
-            create_btn_mapping(Buttons.DPAD_UP, cmds.UP.value),
-            create_btn_mapping(Buttons.DPAD_DOWN, cmds.DOWN.value),
-            create_btn_mapping(Buttons.DPAD_LEFT, cmds.LEFT.value),
-            create_btn_mapping(Buttons.DPAD_RIGHT, cmds.RIGHT.value),
-            create_btn_mapping(Buttons.DPAD_MIDDLE, cmds.OK.value),
-            create_btn_mapping(Buttons.PREV, cmds.PREVIOUS.value),
-            create_btn_mapping(Buttons.PLAY, cmds.PLAY_PAUSE.value),
-            create_btn_mapping(Buttons.NEXT, cmds.NEXT.value),
+            create_btn_mapping(Buttons.DPAD_UP, cmds.UP),
+            create_btn_mapping(Buttons.DPAD_DOWN, cmds.DOWN),
+            create_btn_mapping(Buttons.DPAD_LEFT, cmds.LEFT),
+            create_btn_mapping(Buttons.DPAD_RIGHT, cmds.RIGHT),
+            create_btn_mapping(Buttons.DPAD_MIDDLE, cmds.OK),
+            create_btn_mapping(Buttons.PREV, cmds.PREVIOUS),
+            create_btn_mapping(Buttons.PLAY, cmds.PLAY_PAUSE),
+            create_btn_mapping(Buttons.NEXT, cmds.NEXT),
             DeviceButtonMapping(
                 button="MENU",
-                short_press=EntityCommand(cmd_id="menu_toggle", params=None), long_press=None),
+                short_press=EntityCommand(cmd_id=cmds.MENU, params=None), long_press=None),
             DeviceButtonMapping(
                 button="STOP",
-                short_press=EntityCommand(cmd_id="stop", params=None), long_press=None),
+                short_press=EntityCommand(cmd_id=cmds.STOP, params=None), long_press=None),
         ]
 
     def create_ui(self) -> list[UiPage | dict[str, Any]]:
@@ -93,12 +94,14 @@ class KaleidescapeRemote(Remote):
         ui_page1 = UiPage("page1", "Power", grid=Size(6, 6))
         ui_page1.add(create_ui_text("Power On", 0, 0, size=Size(3, 1), cmd=Commands.ON))
         ui_page1.add(create_ui_text("Standby", 3, 0, size=Size(3, 1), cmd=Commands.OFF))
-
-        ui_page1.add(create_ui_text("Menu", 1, 2, size=Size(4, 1), cmd=cmds.MENU.value))
-        ui_page1.add(create_ui_text("Stop", 0, 3, size=Size(3, 1), cmd=cmds.STOP.value))
-        ui_page1.add(create_ui_text("Cancel", 3, 3, size=Size(3, 1), cmd=cmds.CANCEL.value))
-
-        ui_page1.add(create_ui_text("Intermission", 1, 4, size=Size(4, 1), cmd=cmds.INTERMISSION.value))
+        ui_page1.add(create_ui_text("Menu", 1, 1, size=Size(4, 1), cmd=cmds.MENU))
+        ui_page1.add(create_ui_text("-- Show Movie Views --", 1, 2, size=Size(4, 1)))
+        ui_page1.add(create_ui_text("Collections", 0, 3, size=Size(2, 1), cmd=cmds.MOVIE_COLLECTIONS))
+        ui_page1.add(create_ui_text("Covers", 2, 3, size=Size(2, 1), cmd=cmds.MOVIE_COVERS))
+        ui_page1.add(create_ui_text("List", 4, 3, size=Size(2, 1), cmd=cmds.MOVIE_LIST))
+        ui_page1.add(create_ui_text("Stop", 0, 4, size=Size(3, 1), cmd=cmds.STOP))
+        ui_page1.add(create_ui_text("Cancel", 3, 4, size=Size(3, 1), cmd=cmds.CANCEL))
+        ui_page1.add(create_ui_text("Intermission", 1, 5, size=Size(4, 1), cmd=cmds.INTERMISSION))
         return [ui_page1]
 
     async def command(self, cmd_id: str, params: dict[str, Any] | None = None) -> StatusCodes:
@@ -139,21 +142,18 @@ class KaleidescapeRemote(Remote):
                     if not simple_cmd:
                         _LOG.warning("Missing command in SEND_CMD")
                         status = StatusCodes.BAD_REQUEST
-                    elif simple_cmd in (cmd.value for cmd in cmds):
-                        actual_cmd = None
-
-                        if simple_cmd == cmds.PLAY_PAUSE:
-                            status = await self._device.play_pause()
-                        elif simple_cmd == cmds.INTERMISSION:
-                            status = await self._device.intermission_toggle()
-                        else:
-                            actual_cmd = simple_cmd
-
-                        if actual_cmd:
-                            status = await self._device.send_command(actual_cmd)
                     else:
-                        _LOG.warning("Unknown command: %s", simple_cmd)
-                        status = StatusCodes.NOT_IMPLEMENTED
+                        match simple_cmd:
+                            case cmds.INTERMISSION:
+                                status = await self._device.intermission_toggle()
+                            case cmds.MOVIE_COLLECTIONS:
+                                status = await self._device.collections()
+                            case cmds.MOVIE_LIST:
+                                status = await self._device.list()
+                            case cmds.PLAY_PAUSE:
+                                status = await self._device.play_pause()
+                            case _:
+                                status = await self._device.send_command(simple_cmd)
 
                 case _:
                     status = StatusCodes.NOT_IMPLEMENTED
@@ -186,3 +186,12 @@ class KaleidescapeRemote(Remote):
 
         _LOG.debug("Kaleidescape Remote update attributes %s -> %s", update, attributes)
         return attributes
+
+# def send_cmd(command: cmds):
+#     """
+#     Wraps a SimpleCommand enum into a UI-compatible send command payload.
+
+#     :param command: A SimpleCommands enum member (e.g. SimpleCommands.UP).
+#     :return: A dictionary payload compatible with remote.create_send_cmd().
+#     """
+#     return remote.create_send_cmd(command)

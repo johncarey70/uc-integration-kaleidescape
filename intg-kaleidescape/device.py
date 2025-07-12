@@ -10,7 +10,6 @@ from enum import IntEnum
 from typing import Any
 
 import ucapi
-from const import EntityPrefix
 from kaleidescape import Device as KaleidescapeDevice
 from kaleidescape import KaleidescapeError
 from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
@@ -20,6 +19,8 @@ from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
 from pyee.asyncio import AsyncIOEventEmitter
 from ucapi.media_player import Attributes as MediaAttr
 from ucapi.media_player import States as MediaStates
+
+from const import EntityPrefix
 
 #from ucapi.sensor import Attributes as SensorAttr
 
@@ -201,13 +202,19 @@ class KaleidescapePlayer:
         await self.device.select()
         return ucapi.StatusCodes.OK
 
-    async def play_pause(self) -> ucapi.StatusCodes:
-        """Send Play-Pause command."""
-        _LOG.debug("Play-Pause State = %s", self.device.movie.play_status)
-        if self.device.movie.play_status == PLAY_STATUS_PLAYING:
-            await self.media_pause()
-        else:
-            await self.media_play()
+    async def covers(self) -> ucapi.StatusCodes:
+        """Send Go Movie Covers command."""
+        await self.device.go_movie_covers()
+        return ucapi.StatusCodes.OK
+
+    async def collections(self) -> ucapi.StatusCodes:
+        """Send go movie collections command."""
+        message = "01/1/GO_MOVIE_COLLECTIONS:\r"
+        port = 10000
+        timeout = 2  # seconds
+
+        with socket.create_connection((self.host, port), timeout=timeout) as sock:
+            sock.sendall(message.encode("utf-8"))
         return ucapi.StatusCodes.OK
 
     async def intermission_toggle(self) -> ucapi.StatusCodes:
@@ -218,7 +225,25 @@ class KaleidescapePlayer:
 
         with socket.create_connection((self.host, port), timeout=timeout) as sock:
             sock.sendall(message.encode("utf-8"))
+        return ucapi.StatusCodes.OK
 
+    async def list(self) -> ucapi.StatusCodes:
+        """Send go movie list command."""
+        message = "01/1/GO_MOVIE_LIST:\r"
+        port = 10000
+        timeout = 2  # seconds
+
+        with socket.create_connection((self.host, port), timeout=timeout) as sock:
+            sock.sendall(message.encode("utf-8"))
+        return ucapi.StatusCodes.OK
+
+    async def play_pause(self) -> ucapi.StatusCodes:
+        """Send Play-Pause command."""
+        _LOG.debug("Play / Pause State = %s", self.device.movie.play_status)
+        if self.device.movie.play_status == PLAY_STATUS_PLAYING:
+            await self.media_pause()
+        else:
+            await self.media_play()
         return ucapi.StatusCodes.OK
 
     async def _on_event(self, event: str):
@@ -262,7 +287,11 @@ class KaleidescapePlayer:
         _LOG.debug("player disconnected")
         self._connected = False
         self._attr_state = MediaStates.UNAVAILABLE
-        self.events.emit(Events.DISCONNECTED.name, self.device_id)
+
+        try:
+            self.events.emit(Events.DISCONNECTED.name, self.device_id)
+        except Exception as exc:
+            _LOG.exception("Unhandled exception during DISCONNECTED event: %s", exc)
 
     async def _handle_reconnecting(self):
         _LOG.debug("player reconnecting")

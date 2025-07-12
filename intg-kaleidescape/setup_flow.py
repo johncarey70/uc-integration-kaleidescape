@@ -7,8 +7,9 @@ and device onboarding into the system.
 
 import logging
 
-import config
 import ucapi
+
+import config
 from api import api
 from device import KaleidescapeInfo
 from discover import discover_kaleidescape_device, fetch_device_info

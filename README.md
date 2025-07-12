@@ -27,6 +27,9 @@ This integration driver allows control of a **Kaleidescape Video Player** device
 - Previous
 - Play
 - Next
+- Movie Collections
+- Movie Covers
+- Movie List
 
 ## Installation
 
