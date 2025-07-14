@@ -82,7 +82,7 @@ class KaleidescapeRemote(Remote):
             create_btn_mapping(Buttons.NEXT, cmds.NEXT),
             DeviceButtonMapping(
                 button="MENU",
-                short_press=EntityCommand(cmd_id=cmds.MENU, params=None), long_press=None),
+                short_press=EntityCommand(cmd_id=cmds.MENU_TOGGLE, params=None), long_press=None),
             DeviceButtonMapping(
                 button="STOP",
                 short_press=EntityCommand(cmd_id=cmds.STOP, params=None), long_press=None),
@@ -94,7 +94,7 @@ class KaleidescapeRemote(Remote):
         ui_page1 = UiPage("page1", "Power", grid=Size(6, 6))
         ui_page1.add(create_ui_text("Power On", 0, 0, size=Size(3, 1), cmd=Commands.ON))
         ui_page1.add(create_ui_text("Standby", 3, 0, size=Size(3, 1), cmd=Commands.OFF))
-        ui_page1.add(create_ui_text("Menu", 1, 1, size=Size(4, 1), cmd=cmds.MENU))
+        ui_page1.add(create_ui_text("Menu", 1, 1, size=Size(4, 1), cmd=cmds.MENU_TOGGLE))
         ui_page1.add(create_ui_text("-- Show Movie Views --", 1, 2, size=Size(4, 1)))
         ui_page1.add(create_ui_text("Collections", 0, 3, size=Size(2, 1), cmd=cmds.MOVIE_COLLECTIONS))
         ui_page1.add(create_ui_text("Covers", 2, 3, size=Size(2, 1), cmd=cmds.MOVIE_COVERS))
@@ -143,11 +143,15 @@ class KaleidescapeRemote(Remote):
                         _LOG.warning("Missing command in SEND_CMD")
                         status = StatusCodes.BAD_REQUEST
                     else:
+                        simple_cmd = normalize_cmd(simple_cmd)
+
                         match simple_cmd:
                             case cmds.INTERMISSION:
                                 status = await self._device.intermission_toggle()
                             case cmds.MOVIE_COLLECTIONS:
                                 status = await self._device.collections()
+                            case cmds.MOVIE_COVERS:
+                                status = await self._device.movie_covers()
                             case cmds.MOVIE_LIST:
                                 status = await self._device.list()
                             case cmds.PLAY_PAUSE:
@@ -186,6 +190,9 @@ class KaleidescapeRemote(Remote):
 
         _LOG.debug("Kaleidescape Remote update attributes %s -> %s", update, attributes)
         return attributes
+
+def normalize_cmd(cmd: str) -> str:
+    return cmd.lower().replace(" / ", "_").replace(" ", "_").replace("ok", "select")
 
 # def send_cmd(command: cmds):
 #     """

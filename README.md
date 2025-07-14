@@ -6,7 +6,8 @@
 This software may contain bugs that could affect system stability. Please use it at your own risk!
 
 
-This integration driver allows control of a **Kaleidescape Video Player** device. A media player and remote entity are exposed to the Remote core.
+This integration driver allows control of a **Kaleidescape Video Player** device. A media player and remote entity are exposed to the Remote core. At this time only one player is supported, if you have multiple players
+I suggest you either remove the other players from the network while configuring the one you want, or use manual setup.
 
 
 ## Supported media player attributes

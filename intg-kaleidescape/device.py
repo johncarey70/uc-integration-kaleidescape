@@ -142,14 +142,16 @@ class KaleidescapePlayer:
 
     async def send_command(self, command: str) -> ucapi.StatusCodes:
         """Send a command to a device."""
+        if self.is_on:
+            method = getattr(self.device, command, None)
+            if not callable(method):
+                _LOG.warning("Device method for command '%s' is not callable or missing", command)
+                return ucapi.StatusCodes.NOT_FOUND
 
-        method = getattr(self.device, command, None)
-        if not callable(method):
-            _LOG.warning("Device method for command '%s' is not callable or missing", command)
-            return ucapi.StatusCodes.NOT_FOUND
-
-        _LOG.debug("Sending command: %s", command)
-        await method()
+            _LOG.debug("Sending command: %s", command)
+            await method()
+        else:
+            _LOG.debug("Cannot send command: '%s' device is powered off", command)
         return ucapi.StatusCodes.OK
 
     async def power_on(self) -> ucapi.StatusCodes:
@@ -174,76 +176,97 @@ class KaleidescapePlayer:
 
     async def media_pause(self) -> ucapi.StatusCodes:
         """Send pause command."""
-        await self.device.pause()
+        if self.is_on:
+            await self.device.pause()
         return ucapi.StatusCodes.OK
 
     async def media_play(self) -> ucapi.StatusCodes:
         """Send play command."""
-        await self.device.play()
+        if self.is_on:
+            await self.device.play()
         return ucapi.StatusCodes.OK
 
     async def media_stop(self) -> ucapi.StatusCodes:
         """Send stop command."""
-        await self.device.stop()
+        if self.is_on:
+            await self.device.stop()
         return ucapi.StatusCodes.OK
 
     async def media_next_track(self) -> ucapi.StatusCodes:
         """Send track next command."""
-        await self.device.next()
+        if self.is_on:
+            await self.device.next()
         return ucapi.StatusCodes.OK
 
     async def media_previous_track(self) -> ucapi.StatusCodes:
         """Send track previous command."""
-        await self.device.previous()
+        if self.is_on:
+            await self.device.previous()
         return ucapi.StatusCodes.OK
 
     async def media_select(self) -> ucapi.StatusCodes:
         """Send select command."""
-        await self.device.select()
+        if self.is_on:
+            await self.device.select()
         return ucapi.StatusCodes.OK
 
-    async def covers(self) -> ucapi.StatusCodes:
+    async def movie_covers(self) -> ucapi.StatusCodes:
         """Send Go Movie Covers command."""
-        await self.device.go_movie_covers()
+        if self.is_on:
+            await self.send_command("go_movie_covers")
+        else:
+            _LOG.debug("Cannot send command: 'go_movie_covers' device is powered off")
         return ucapi.StatusCodes.OK
 
     async def collections(self) -> ucapi.StatusCodes:
         """Send go movie collections command."""
-        message = "01/1/GO_MOVIE_COLLECTIONS:\r"
-        port = 10000
-        timeout = 2  # seconds
+        if self.is_on:
+            message = "01/1/GO_MOVIE_COLLECTIONS:\r"
+            port = 10000
+            timeout = 2  # seconds
 
-        with socket.create_connection((self.host, port), timeout=timeout) as sock:
-            sock.sendall(message.encode("utf-8"))
+            with socket.create_connection((self.host, port), timeout=timeout) as sock:
+                sock.sendall(message.encode("utf-8"))
+        else:
+            _LOG.debug("Cannot send command: 'GO_MOVIE_COLLECTIONS' device is powered off")
         return ucapi.StatusCodes.OK
 
     async def intermission_toggle(self) -> ucapi.StatusCodes:
         """Send intermission_toggle command."""
-        message = "01/1/INTERMISSION_TOGGLE:\r"
-        port = 10000
-        timeout = 2  # seconds
+        if self.is_on:
+            message = "01/1/INTERMISSION_TOGGLE:\r"
+            port = 10000
+            timeout = 2  # seconds
 
-        with socket.create_connection((self.host, port), timeout=timeout) as sock:
-            sock.sendall(message.encode("utf-8"))
+            with socket.create_connection((self.host, port), timeout=timeout) as sock:
+                sock.sendall(message.encode("utf-8"))
+        else:
+            _LOG.debug("Cannot send command: 'INTERMISSION_TOGGLE' device is powered off")
         return ucapi.StatusCodes.OK
 
     async def list(self) -> ucapi.StatusCodes:
         """Send go movie list command."""
-        message = "01/1/GO_MOVIE_LIST:\r"
-        port = 10000
-        timeout = 2  # seconds
+        if self.is_on:
+            message = "01/1/GO_MOVIE_LIST:\r"
+            port = 10000
+            timeout = 2  # seconds
 
-        with socket.create_connection((self.host, port), timeout=timeout) as sock:
-            sock.sendall(message.encode("utf-8"))
+            with socket.create_connection((self.host, port), timeout=timeout) as sock:
+                sock.sendall(message.encode("utf-8"))
+        else:
+            _LOG.debug("Cannot send command: 'GO_MOVIE_LIST' device is powered off")
         return ucapi.StatusCodes.OK
 
     async def play_pause(self) -> ucapi.StatusCodes:
         """Send Play-Pause command."""
         _LOG.debug("Play / Pause State = %s", self.device.movie.play_status)
-        if self.device.movie.play_status == PLAY_STATUS_PLAYING:
-            await self.media_pause()
+        if self.is_on:
+            if self.device.movie.play_status == PLAY_STATUS_PLAYING:
+                await self.media_pause()
+            else:
+                await self.media_play()
         else:
-            await self.media_play()
+            _LOG.debug("Cannot send command: 'media_pause or media_play' device is powered off")
         return ucapi.StatusCodes.OK
 
     async def _on_event(self, event: str):
