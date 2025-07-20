@@ -66,7 +66,31 @@ class MediaPlayerDef: # pylint: disable=too-few-public-methods
     a list of simple commands.
     """
 
-    features = []
+    features = [
+        media_player.Features.ON_OFF,
+        media_player.Features.VOLUME_UP_DOWN,
+        media_player.Features.MUTE_TOGGLE,
+        media_player.Features.PLAY_PAUSE,
+        media_player.Features.STOP,
+        media_player.Features.NEXT,
+        media_player.Features.PREVIOUS,
+        media_player.Features.MEDIA_DURATION,
+        media_player.Features.MEDIA_POSITION,
+        media_player.Features.MEDIA_TITLE,
+        media_player.Features.MEDIA_ARTIST,
+        media_player.Features.MEDIA_ALBUM,
+        media_player.Features.MEDIA_IMAGE_URL,
+        media_player.Features.MEDIA_TYPE,
+        media_player.Features.HOME,
+        media_player.Features.DPAD,
+        media_player.Features.CONTEXT_MENU,
+        media_player.Features.MENU,
+        media_player.Features.REWIND,
+        media_player.Features.FAST_FORWARD,
+        media_player.Features.SEEK,
+        media_player.Features.GUIDE,
+    ]
+
     attributes = {
     media_player.Attributes.MEDIA_DURATION: "",
     media_player.Attributes.MEDIA_IMAGE_URL: "",

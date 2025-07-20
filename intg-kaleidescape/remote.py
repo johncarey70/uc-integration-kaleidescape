@@ -8,16 +8,16 @@ Remote entity functions.
 import logging
 from typing import Any
 
+from const import RemoteDef
+from const import SimpleCommands as cmds
+from device import KaleidescapeInfo, KaleidescapePlayer
 from ucapi import StatusCodes
 from ucapi.media_player import Attributes as MediaAttributes
 from ucapi.media_player import States as MediaStates
 from ucapi.remote import Attributes, Commands, EntityCommand, Remote, States
 from ucapi.ui import (Buttons, DeviceButtonMapping, Size, UiPage,
                       create_btn_mapping, create_ui_text)
-
-from const import RemoteDef
-from const import SimpleCommands as cmds
-from device import KaleidescapeInfo, KaleidescapePlayer
+from utils import normalize_cmd
 
 _LOG = logging.getLogger(__name__)
 
@@ -190,15 +190,3 @@ class KaleidescapeRemote(Remote):
 
         _LOG.debug("Kaleidescape Remote update attributes %s -> %s", update, attributes)
         return attributes
-
-def normalize_cmd(cmd: str) -> str:
-    return cmd.lower().replace(" / ", "_").replace(" ", "_").replace("ok", "select")
-
-# def send_cmd(command: cmds):
-#     """
-#     Wraps a SimpleCommand enum into a UI-compatible send command payload.
-
-#     :param command: A SimpleCommands enum member (e.g. SimpleCommands.UP).
-#     :return: A dictionary payload compatible with remote.create_send_cmd().
-#     """
-#     return remote.create_send_cmd(command)

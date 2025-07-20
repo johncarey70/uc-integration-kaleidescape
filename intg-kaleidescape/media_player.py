@@ -8,11 +8,12 @@ Media-player entity functions.
 import logging
 from typing import Any
 
-from ucapi import MediaPlayer, StatusCodes
-from ucapi.media_player import Attributes, Commands, DeviceClasses, States
-
 from const import MediaPlayerDef
+from const import SimpleCommands as cmds
 from device import KaleidescapeInfo, KaleidescapePlayer
+from ucapi import MediaPlayer, StatusCodes, media_player
+from ucapi.media_player import Attributes, Commands, DeviceClasses, States
+from utils import normalize_cmd
 
 _LOG = logging.getLogger(__name__)
 
@@ -25,7 +26,15 @@ class KaleidescapeMediaPlayer(MediaPlayer):
         entity_id = f"media_player.{mp_info.id}"
         features = MediaPlayerDef.features
         attributes = MediaPlayerDef.attributes
-        options = {}
+        options={
+            media_player.Options.SIMPLE_COMMANDS: [
+                cmds.CANCEL.display_name,
+                cmds.INTERMISSION.display_name,
+                cmds.MOVIE_COLLECTIONS.display_name,
+                cmds.MOVIE_COVERS.display_name,
+                cmds.MOVIE_LIST.display_name
+            ]
+        }
 
         super().__init__(
             entity_id,
@@ -53,7 +62,15 @@ class KaleidescapeMediaPlayer(MediaPlayer):
         try:
             cmd = Commands(cmd_id)
         except ValueError:
-            return StatusCodes.NOT_IMPLEMENTED
+            try:
+                _LOG.debug("Command Received = %s", cmd_id)
+                cmd = normalize_cmd(cmd_id)
+                _LOG.debug("Command Normalized = %s", cmd)
+                cmd = cmds(cmd)
+                _LOG.debug("Actual Command = %s", cmd)
+            except ValueError:
+                return StatusCodes.NOT_IMPLEMENTED
+
 
         match cmd:
             case Commands.ON:
@@ -61,7 +78,6 @@ class KaleidescapeMediaPlayer(MediaPlayer):
             case Commands.OFF:
                 res = await self._device.power_off()
             case Commands.PLAY_PAUSE:
-                _LOG.debug("Sending Play/Pause")
                 if self._device.is_on:
                     res = await self._device.play_pause()
                 else:
@@ -72,9 +88,36 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 res = await self._device.media_previous_track()
             case Commands.CURSOR_ENTER:
                 res = await self._device.media_select()
+            case Commands.BACK:
+                res = await self._device.back()
             case Commands.STOP:
                 res = await self._device.media_stop()
+            case Commands.CURSOR_UP:
+                res = await self._device.cursor_up()
+            case Commands.CURSOR_DOWN:
+                res = await self._device.cursor_down()
+            case Commands.CURSOR_LEFT:
+                res = await self._device.cursor_left()
+            case Commands.CURSOR_RIGHT:
+                res = await self._device.cursor_right()
+            case Commands.MENU:
+                res = await self._device.menu()
+            case Commands.FAST_FORWARD:
+                res = await self._device.fast_forward()
+            case Commands.REWIND:
+                res = await self._device.rewind()
+            case cmds.CANCEL:
+                res = await self._device.cancel()
+            case cmds.INTERMISSION:
+                res = await self._device.intermission_toggle()
+            case cmds.MOVIE_COLLECTIONS:
+                res = await self._device.collections()
+            case cmds.MOVIE_COVERS:
+                res = await self._device.movie_covers()
+            case cmds.MOVIE_LIST:
+                res = await self._device.list()
             case _:
+                _LOG.debug("Not Implemented: %s", cmd)
                 return StatusCodes.NOT_IMPLEMENTED
 
         return res

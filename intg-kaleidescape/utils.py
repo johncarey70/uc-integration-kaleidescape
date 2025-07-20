@@ -20,7 +20,7 @@ from typing import Type
 def setup_logger():
     """Get logger from all modules"""
 
-    level = os.getenv("UC_LOG_LEVEL", "DEBUG").upper()
+    level = os.getenv("UC_LOG_LEVEL", "INFO").upper()
 
     logging.getLogger("ucapi.api").setLevel(level)
     logging.getLogger("ucapi.entities").setLevel(level)
@@ -34,7 +34,6 @@ def setup_logger():
     logging.getLogger("media_player").setLevel(level)
     logging.getLogger("registry").setLevel(level)
     logging.getLogger("utils").setLevel(level)
-    logging.getLogger("sensor").setLevel(level)
     #logging.getLogger("kaleidescape").setLevel(level)
 
 
@@ -72,3 +71,7 @@ def validate_simple_commands_exist_on_executor(
         logger.debug("All SimpleCommands are implemented by the executor.")
 
     return missing
+
+def normalize_cmd(cmd: str) -> str:
+    """Normalize the cmd"""
+    return cmd.lower().replace(" / ", "_").replace(" ", "_").replace("ok", "select")

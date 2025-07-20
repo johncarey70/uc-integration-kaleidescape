@@ -4,12 +4,14 @@ import asyncio
 import json
 import logging
 import socket
+import time
 from asyncio import AbstractEventLoop
 from dataclasses import asdict, dataclass
 from enum import IntEnum
 from typing import Any
 
 import ucapi
+from const import EntityPrefix
 from kaleidescape import Device as KaleidescapeDevice
 from kaleidescape import KaleidescapeError
 from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
@@ -19,10 +21,6 @@ from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
 from pyee.asyncio import AsyncIOEventEmitter
 from ucapi.media_player import Attributes as MediaAttr
 from ucapi.media_player import States as MediaStates
-
-from const import EntityPrefix
-
-#from ucapi.sensor import Attributes as SensorAttr
 
 _LOG = logging.getLogger(__name__)
 
@@ -34,7 +32,6 @@ class Events(IntEnum):
     DISCONNECTED = 2
     ERROR = 3
     UPDATE = 4
-    IP_ADDRESS_CHANGED = 5
 
 class DeviceState:
     """
@@ -93,6 +90,12 @@ class KaleidescapePlayer:
         self._connected: bool = False
         self._event_loop = loop or asyncio.get_running_loop()
         self._attr_state = MediaStates.OFF
+
+        self._position_seconds = 0
+        self._duration_seconds = 0
+        self._last_position_update = time.monotonic()
+        self._is_playing = False
+        self._position_updater_task: asyncio.Task | None = None
 
         # Device management and communication
         self.events = AsyncIOEventEmitter(self._event_loop)
@@ -154,6 +157,21 @@ class KaleidescapePlayer:
             _LOG.debug("Cannot send command: '%s' device is powered off", command)
         return ucapi.StatusCodes.OK
 
+    def _send_socket_command(self, message: str, *, port: int = 10000, timeout: int = 2) -> None:
+        """Send a raw socket command to the device if it is powered on.
+
+        Args:
+            message (str): The command message to send.
+            port (int, optional): TCP port to connect to. Defaults to 10000.
+            timeout (int, optional): Timeout for socket connection in seconds. Defaults to 2.
+        """
+        if not self.is_on:
+            _LOG.debug("Cannot send command: '%s' device is powered off", message.strip())
+            return
+
+        with socket.create_connection((self.host, port), timeout=timeout) as sock:
+            sock.sendall(message.encode("utf-8"))
+
     async def power_on(self) -> ucapi.StatusCodes:
         """Turn the device on."""
         if self.is_on:
@@ -174,91 +192,115 @@ class KaleidescapePlayer:
         """Log when a power action is skipped because the device is already in the target state."""
         _LOG.debug("Power %s skipped: Device is already %s.", action, self.device.power.state)
 
+    async def back(self) -> ucapi.StatusCodes:
+        """Trigger the 'back' command."""
+        if self.is_on:
+            await self.device.cancel()
+        return ucapi.StatusCodes.OK
+
+    async def cancel(self) -> ucapi.StatusCodes:
+        """Trigger the 'cancel' command."""
+        if self.is_on:
+            await self.device.cancel()
+        return ucapi.StatusCodes.OK
+
+    async def collections(self) -> ucapi.StatusCodes:
+        """Trigger the 'go movie collections' command."""
+        self._send_socket_command("01/1/GO_MOVIE_COLLECTIONS:\r")
+        return ucapi.StatusCodes.OK
+
+    async def cursor_down(self) -> ucapi.StatusCodes:
+        """Trigger the 'cursor down' command."""
+        if self.is_on:
+            await self.device.down()
+        return ucapi.StatusCodes.OK
+
+    async def cursor_left(self) -> ucapi.StatusCodes:
+        """Trigger the 'cursor left' command."""
+        if self.is_on:
+            await self.device.left()
+        return ucapi.StatusCodes.OK
+
+    async def cursor_right(self) -> ucapi.StatusCodes:
+        """Trigger the 'cursor right' command."""
+        if self.is_on:
+            await self.device.right()
+        return ucapi.StatusCodes.OK
+
+    async def cursor_up(self) -> ucapi.StatusCodes:
+        """Trigger the 'cursor up' command."""
+        if self.is_on:
+            await self.device.up()
+        return ucapi.StatusCodes.OK
+
+    async def fast_forward(self) -> ucapi.StatusCodes:
+        """Trigger the 'fast forward' command."""
+        if self.is_on:
+            await self.device.scan_forward()
+        return ucapi.StatusCodes.OK
+
+    async def intermission_toggle(self) -> ucapi.StatusCodes:
+        """Trigger the 'intermission toggle' command."""
+        self._send_socket_command("01/1/INTERMISSION_TOGGLE:\r")
+        return ucapi.StatusCodes.OK
+
+    async def list(self) -> ucapi.StatusCodes:
+        """Trigger the 'go movie list' command."""
+        self._send_socket_command("01/1/GO_MOVIE_LIST:\r")
+        return ucapi.StatusCodes.OK
+
+    async def media_next_track(self) -> ucapi.StatusCodes:
+        """Trigger the 'next track' command."""
+        if self.is_on:
+            await self.device.next()
+        return ucapi.StatusCodes.OK
+
     async def media_pause(self) -> ucapi.StatusCodes:
-        """Send pause command."""
+        """Trigger the 'pause' command."""
         if self.is_on:
             await self.device.pause()
         return ucapi.StatusCodes.OK
 
     async def media_play(self) -> ucapi.StatusCodes:
-        """Send play command."""
+        """Trigger the 'play' command."""
         if self.is_on:
             await self.device.play()
         return ucapi.StatusCodes.OK
 
-    async def media_stop(self) -> ucapi.StatusCodes:
-        """Send stop command."""
-        if self.is_on:
-            await self.device.stop()
-        return ucapi.StatusCodes.OK
-
-    async def media_next_track(self) -> ucapi.StatusCodes:
-        """Send track next command."""
-        if self.is_on:
-            await self.device.next()
-        return ucapi.StatusCodes.OK
-
     async def media_previous_track(self) -> ucapi.StatusCodes:
-        """Send track previous command."""
+        """Trigger the 'previous track' command."""
         if self.is_on:
             await self.device.previous()
         return ucapi.StatusCodes.OK
 
     async def media_select(self) -> ucapi.StatusCodes:
-        """Send select command."""
+        """Trigger the 'select' command."""
         if self.is_on:
             await self.device.select()
         return ucapi.StatusCodes.OK
 
+    async def media_stop(self) -> ucapi.StatusCodes:
+        """Trigger the 'stop' command."""
+        if self.is_on:
+            await self.device.stop()
+        return ucapi.StatusCodes.OK
+
+    async def menu(self) -> ucapi.StatusCodes:
+        """Trigger the 'menu toggle' command."""
+        if self.is_on:
+            await self.device.menu_toggle()
+        return ucapi.StatusCodes.OK
+
     async def movie_covers(self) -> ucapi.StatusCodes:
-        """Send Go Movie Covers command."""
+        """Trigger the 'go movie covers' command."""
         if self.is_on:
             await self.send_command("go_movie_covers")
         else:
             _LOG.debug("Cannot send command: 'go_movie_covers' device is powered off")
         return ucapi.StatusCodes.OK
 
-    async def collections(self) -> ucapi.StatusCodes:
-        """Send go movie collections command."""
-        if self.is_on:
-            message = "01/1/GO_MOVIE_COLLECTIONS:\r"
-            port = 10000
-            timeout = 2  # seconds
-
-            with socket.create_connection((self.host, port), timeout=timeout) as sock:
-                sock.sendall(message.encode("utf-8"))
-        else:
-            _LOG.debug("Cannot send command: 'GO_MOVIE_COLLECTIONS' device is powered off")
-        return ucapi.StatusCodes.OK
-
-    async def intermission_toggle(self) -> ucapi.StatusCodes:
-        """Send intermission_toggle command."""
-        if self.is_on:
-            message = "01/1/INTERMISSION_TOGGLE:\r"
-            port = 10000
-            timeout = 2  # seconds
-
-            with socket.create_connection((self.host, port), timeout=timeout) as sock:
-                sock.sendall(message.encode("utf-8"))
-        else:
-            _LOG.debug("Cannot send command: 'INTERMISSION_TOGGLE' device is powered off")
-        return ucapi.StatusCodes.OK
-
-    async def list(self) -> ucapi.StatusCodes:
-        """Send go movie list command."""
-        if self.is_on:
-            message = "01/1/GO_MOVIE_LIST:\r"
-            port = 10000
-            timeout = 2  # seconds
-
-            with socket.create_connection((self.host, port), timeout=timeout) as sock:
-                sock.sendall(message.encode("utf-8"))
-        else:
-            _LOG.debug("Cannot send command: 'GO_MOVIE_LIST' device is powered off")
-        return ucapi.StatusCodes.OK
-
     async def play_pause(self) -> ucapi.StatusCodes:
-        """Send Play-Pause command."""
+        """Toggle between play and pause based on current playback state."""
         _LOG.debug("Play / Pause State = %s", self.device.movie.play_status)
         if self.is_on:
             if self.device.movie.play_status == PLAY_STATUS_PLAYING:
@@ -269,11 +311,18 @@ class KaleidescapePlayer:
             _LOG.debug("Cannot send command: 'media_pause or media_play' device is powered off")
         return ucapi.StatusCodes.OK
 
+    async def rewind(self) -> ucapi.StatusCodes:
+        """Trigger the 'rewind' command."""
+        if self.is_on:
+            await self.device.scan_reverse()
+        return ucapi.StatusCodes.OK
+
+
     async def _on_event(self, event: str):
         """Handle device connection state changes based on incoming event."""
         if event == "":
             return
-        _LOG.debug("Received Event: %s...........................", event)
+        _LOG.warning("Received Event: %s...........................", event)
         _LOG.debug("Power State = %s", self.state)
         handlers = {
             DEVICE_POWER_STATE: self._handle_power_state,
@@ -321,6 +370,14 @@ class KaleidescapePlayer:
 
     async def _handle_play_status(self):
         _LOG.debug("Player Status = %s", self.device.movie.play_status)
+        new_state = self.device.movie.play_status == PLAY_STATUS_PLAYING
+        if new_state != self._is_playing:
+            self._is_playing = new_state
+            self._last_position_update = time.monotonic()
+            if self._is_playing:
+                self._start_position_updater()
+            else:
+                self._stop_position_updater()
 
     async def _handle_power_state(self):
         _LOG.debug("Power State = %s", self.device.power.state)
@@ -338,7 +395,10 @@ class KaleidescapePlayer:
             EntityPrefix.REMOTE.value, MediaAttr.STATE, self.state)
 
     async def _handle_events(self, event: str):
-        _LOG.debug("Event received: %s", event)
+        _LOG.warning("Event received: %s", event)
+        _LOG.warning("OSD: %s", self.device.osd)
+        await self._handle_play_status()
+
         await self._emit_update(
             EntityPrefix.MEDIA_PLAYER.value, MediaAttr.STATE, self.state)
         await self._emit_update(
@@ -349,6 +409,37 @@ class KaleidescapePlayer:
             EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_TITLE, self.device.movie.title)
         await self._emit_update(
             EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_TYPE, self.device.movie.media_type)
+
+        self._position_seconds = self.device.movie.title_location or 0
+        self._last_position_update = time.monotonic()
+        await self._emit_update(EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_POSITION, self._position_seconds)
+
+        self._duration_seconds = self.device.movie.title_length or 0
+        await self._emit_update(EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_DURATION, self._duration_seconds)
+
+    def _start_position_updater(self):
+        if self._position_updater_task is None or self._position_updater_task.done():
+            self._position_updater_task = asyncio.create_task(self._position_updater())
+
+    def _stop_position_updater(self):
+        if self._position_updater_task:
+            self._position_updater_task.cancel()
+            self._position_updater_task = None
+
+    async def _position_updater(self):
+        try:
+            while self._is_playing:
+                await asyncio.sleep(1)
+                elapsed = int(time.monotonic() - self._last_position_update)
+                current_position = min(self._position_seconds + elapsed, self._duration_seconds)
+                await self._emit_update(EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_POSITION, current_position)
+        except asyncio.CancelledError:
+            pass
+
+        await self._emit_update(
+            EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_POSITION, self.device.movie.title_location)
+        await self._emit_update(
+            EntityPrefix.MEDIA_PLAYER.value, MediaAttr.MEDIA_DURATION, self.device.movie.title_length)
 
     async def _emit_update(self, prefix: str, attr: str, value: Any) -> None:
         entity_id = f"{prefix}.{self.device_id}"
