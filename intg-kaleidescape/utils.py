@@ -20,7 +20,7 @@ from typing import Type
 def setup_logger():
     """Get logger from all modules"""
 
-    level = os.getenv("UC_LOG_LEVEL", "INFO").upper()
+    level = os.getenv("UC_LOG_LEVEL", "DEBUG").upper()
 
     logging.getLogger("ucapi.api").setLevel(level)
     logging.getLogger("ucapi.entities").setLevel(level)

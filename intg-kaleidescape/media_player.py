@@ -28,11 +28,13 @@ class KaleidescapeMediaPlayer(MediaPlayer):
         attributes = MediaPlayerDef.attributes
         options={
             media_player.Options.SIMPLE_COMMANDS: [
+                cmds.ALPHABETIZE_COVER_ART.display_name,
                 cmds.CANCEL.display_name,
                 cmds.INTERMISSION.display_name,
                 cmds.MOVIE_COLLECTIONS.display_name,
                 cmds.MOVIE_COVERS.display_name,
-                cmds.MOVIE_LIST.display_name
+                cmds.MOVIE_LIST.display_name,
+                cmds.SHUFFLE_COVER_ART.display_name
             ]
         }
 
@@ -77,6 +79,8 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 res = await self._device.power_on()
             case Commands.OFF:
                 res = await self._device.power_off()
+            case cmds.ALPHABETIZE_COVER_ART:
+                res = await self._device.alphabetize_cover_art()
             case Commands.PLAY_PAUSE:
                 if self._device.is_on:
                     res = await self._device.play_pause()
@@ -116,6 +120,8 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 res = await self._device.movie_covers()
             case cmds.MOVIE_LIST:
                 res = await self._device.list()
+            case cmds.SHUFFLE_COVER_ART:
+                res = await self._device.shuffle_cover_art()
             case _:
                 _LOG.debug("Not Implemented: %s", cmd)
                 return StatusCodes.NOT_IMPLEMENTED

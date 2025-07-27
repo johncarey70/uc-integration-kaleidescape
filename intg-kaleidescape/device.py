@@ -17,7 +17,7 @@ from kaleidescape import KaleidescapeError
 from kaleidescape.const import (DEVICE_POWER_STATE, DEVICE_POWER_STATE_ON,
                                 DEVICE_POWER_STATE_STANDBY,
                                 PLAY_STATUS_PLAYING, STATE_CONNECTED,
-                                STATE_DISCONNECTED, STATE_RECONNECTING)
+                                STATE_DISCONNECTED)
 from pyee.asyncio import AsyncIOEventEmitter
 from ucapi.media_player import Attributes as MediaAttr
 from ucapi.media_player import States as MediaStates
@@ -25,13 +25,11 @@ from ucapi.media_player import States as MediaStates
 _LOG = logging.getLogger(__name__)
 
 class Events(IntEnum):
-    """Internal driver events."""
+    """Driver lifecycle events used internally for signaling."""
 
-    CONNECTING = 0
-    CONNECTED = 1
-    DISCONNECTED = 2
-    ERROR = 3
-    UPDATE = 4
+    CONNECTED = 0
+    DISCONNECTED = 1
+    UPDATE = 2
 
 class DeviceState:
     """
@@ -43,11 +41,9 @@ class DeviceState:
     Attributes:
         CONNECTED (str): Indicates the device is currently connected.
         DISCONNECTED (str): Indicates the device is currently disconnected.
-        RECONNECTING (str): Indicates the device is attempting to reconnect.
     """
     CONNECTED = STATE_CONNECTED
     DISCONNECTED = STATE_DISCONNECTED
-    RECONNECTING = STATE_RECONNECTING
 
 
 @dataclass
@@ -81,23 +77,27 @@ class KaleidescapePlayer:
         device_id: str | None = None,
         loop: AbstractEventLoop | None = None,
     ):
-        # Identity and connection config
+        # Identity and core connection
         self.device_id = device_id or "unknown"
         self.host = host
         self.device = KaleidescapeDevice(host, timeout=5, reconnect=True, reconnect_delay=5)
 
-        # Event loop and internal connection state
-        self._connected: bool = False
+        # Event loop setup
         self._event_loop = loop or asyncio.get_running_loop()
-        self._attr_state = MediaStates.OFF
 
+        # Internal connection and media state
+        self._connected: bool = False
+        self._attr_state = MediaStates.UNAVAILABLE
+        self._stop_retry = asyncio.Event()
+
+        # Playback state
         self._position_seconds = 0
         self._duration_seconds = 0
         self._last_position_update = time.monotonic()
         self._is_playing = False
         self._position_updater_task: asyncio.Task | None = None
 
-        # Device management and communication
+        # Event communication
         self.events = AsyncIOEventEmitter(self._event_loop)
         self.device.dispatcher.connect(self._on_event)
 
@@ -120,42 +120,70 @@ class KaleidescapePlayer:
         return self._attr_state
 
     async def connect(self) -> bool:
-        """Establish a connection to the device."""
+        """Establish a connection to the device with retry logic."""
         _LOG.debug("Connecting to player")
+
         if self._connected:
-            _LOG.debug("Already connected to Player at %s", self.host)
-            return True
+            _LOG.debug("Already connected disconnecting first")
+            await self.disconnect()
 
-        self.events.emit(Events.CONNECTING.name, self.device_id)
+        self._stop_retry.clear()
+        retry_delay = 1
+        max_delay = 60
 
-        try:
-            await self.device.connect()
+        while not self._stop_retry.is_set():
+            try:
+                await self.device.connect()
+                await asyncio.sleep(0.5)
+                await self._handle_power_state()
+                self._connected = True
+                return True
+            except (KaleidescapeError, ConnectionError) as err:
+                await self.device.disconnect()
+                _LOG.error("Unable to connect to %s: %s", self.host, err)
+                self._connected = False
 
-        except (KaleidescapeError, ConnectionError) as err:
-            await self.device.disconnect()
-            _LOG.error("Unable to connect to %s: %s", self.host, err)
-            return False
+                try:
+                    await asyncio.wait_for(self._stop_retry.wait(), timeout=retry_delay)
+                except asyncio.exceptions.TimeoutError:
+                    pass
 
-        return True
+                retry_delay = min(retry_delay * 2, max_delay)
+
+        _LOG.debug("Connect aborted due to stop signal")
+        return False
 
     async def disconnect(self):
-        """Close the connection cleanly, if not already disconnecting."""
-        _LOG.debug("Disconnecting from player")
-        await self.device.disconnect()
+        """Disconnect from the device and stop any reconnect attempts."""
+        self._stop_retry.set()  # signal reconnect loop to stop
+
+        if self._connected:
+            _LOG.debug("Disconnecting from player")
+            await self.device.disconnect()
+            self._connected = False
+        else:
+            _LOG.debug("Already disconnected skipping")
+
+        await self._handle_power_state()
 
     async def send_command(self, command: str) -> ucapi.StatusCodes:
         """Send a command to a device."""
-        if self.is_on:
-            method = getattr(self.device, command, None)
-            if not callable(method):
-                _LOG.warning("Device method for command '%s' is not callable or missing", command)
-                return ucapi.StatusCodes.NOT_FOUND
-
-            _LOG.debug("Sending command: %s", command)
-            await method()
-        else:
+        if not self.is_on:
             _LOG.debug("Cannot send command: '%s' device is powered off", command)
-        return ucapi.StatusCodes.OK
+            return ucapi.StatusCodes.SERVICE_UNAVAILABLE
+
+        method = getattr(self.device, command, None)
+        if not callable(method):
+            _LOG.warning("Device method for command '%s' is not callable or missing", command)
+            return ucapi.StatusCodes.NOT_FOUND
+
+        _LOG.debug("Sending command: %s", command)
+        try:
+            await method()
+            return ucapi.StatusCodes.OK
+        except Exception as e:
+            _LOG.error("Failed to send command '%s': %s", command, e)
+            return ucapi.StatusCodes.SERVER_ERROR
 
     def _send_socket_command(self, message: str, *, port: int = 10000, timeout: int = 2) -> None:
         """Send a raw socket command to the device if it is powered on.
@@ -173,24 +201,27 @@ class KaleidescapePlayer:
             sock.sendall(message.encode("utf-8"))
 
     async def power_on(self) -> ucapi.StatusCodes:
-        """Turn the device on."""
-        if self.is_on:
-            self._log_power_state_skip("on")
-        else:
+        """Power on the device. Reconnects if not currently connected."""
+
+        if self._connected:
+            _LOG.debug("Sending leave_standby...")
             await self.device.leave_standby()
-        return ucapi.StatusCodes.OK
+            return ucapi.StatusCodes.OK
+        return ucapi.StatusCodes.SERVICE_UNAVAILABLE
 
-    async def power_off(self) -> ucapi.StatusCodes:
-        """Turn the device off."""
-        if self.is_on:
+    async def power_off(self)-> ucapi.StatusCodes:
+        """Power off the device. Reconnects if not currently connected."""
+
+        if self._connected:
+            _LOG.debug("Sending enter_standby...")
             await self.device.enter_standby()
-        else:
-            self._log_power_state_skip("off")
-        return ucapi.StatusCodes.OK
+            return ucapi.StatusCodes.OK
+        return ucapi.StatusCodes.SERVICE_UNAVAILABLE
 
-    def _log_power_state_skip(self, action: str):
-        """Log when a power action is skipped because the device is already in the target state."""
-        _LOG.debug("Power %s skipped: Device is already %s.", action, self.device.power.state)
+    async def alphabetize_cover_art(self) -> ucapi.StatusCodes:
+        """Trigger the 'alphabetize_cover_art' command."""
+        self._send_socket_command("01/7/ALPHABETIZE_COVER_ART:\r")
+        return ucapi.StatusCodes.OK
 
     async def back(self) -> ucapi.StatusCodes:
         """Trigger the 'back' command."""
@@ -317,18 +348,20 @@ class KaleidescapePlayer:
             await self.device.scan_reverse()
         return ucapi.StatusCodes.OK
 
+    async def shuffle_cover_art(self) -> ucapi.StatusCodes:
+        """Trigger the 'shuffle_cover_art' command."""
+        self._send_socket_command("01/6/SHUFFLE_COVER_ART:\r")
+        return ucapi.StatusCodes.OK
 
     async def _on_event(self, event: str):
         """Handle device connection state changes based on incoming event."""
         if event == "":
             return
-        _LOG.warning("Received Event: %s...........................", event)
-        _LOG.debug("Power State = %s", self.state)
+        _LOG.debug("Received Event: %s...........................", event)
         handlers = {
             DEVICE_POWER_STATE: self._handle_power_state,
             DeviceState.CONNECTED: self._handle_connected,
-            DeviceState.DISCONNECTED: self._handle_disconnected,
-            DeviceState.RECONNECTING: self._handle_reconnecting,
+            DeviceState.DISCONNECTED: self._handle_disconnected
         }
 
         handler = handlers.get(event, lambda: self._handle_events(event))
@@ -340,33 +373,21 @@ class KaleidescapePlayer:
 
         await asyncio.sleep(1)
 
-        if self.device.power.state == DEVICE_POWER_STATE_ON:
-            self._attr_state = MediaStates.ON
-        elif self.device.power.state == DEVICE_POWER_STATE_STANDBY:
-            self._attr_state = MediaStates.STANDBY
-        else:
-            self._attr_state = MediaStates.UNKNOWN
-
-        updates = {
-                EntityPrefix.MEDIA_PLAYER: (MediaAttr.STATE, self.state),
-                EntityPrefix.REMOTE: (MediaAttr.STATE, self.state),
-            }
-
-        for prefix, (attr, value) in updates.items():
-            await self._emit_update(prefix.value, attr, value)
+        await self._handle_power_state()
 
     async def _handle_disconnected(self):
-        _LOG.debug("player disconnected")
+        """
+        Mark device as unavailable when disconnected.
+        Avoids redundant updates if already handled by power state logic.
+        """
         self._connected = False
-        self._attr_state = MediaStates.UNAVAILABLE
+        _LOG.warning("[%s] Device disconnected", self.device_id)
 
-        try:
-            self.events.emit(Events.DISCONNECTED.name, self.device_id)
-        except Exception as exc:
-            _LOG.exception("Unhandled exception during DISCONNECTED event: %s", exc)
-
-    async def _handle_reconnecting(self):
-        _LOG.debug("player reconnecting")
+        # Only emit if current state is NOT already unavailable
+        if self._attr_state != MediaStates.UNAVAILABLE:
+            self._attr_state = MediaStates.UNAVAILABLE
+            await self._emit_update(EntityPrefix.MEDIA_PLAYER.value, MediaAttr.STATE, self.state)
+            await self._emit_update(EntityPrefix.REMOTE.value, MediaAttr.STATE, self.state)
 
     async def _handle_play_status(self):
         _LOG.debug("Player Status = %s", self.device.movie.play_status)
@@ -380,19 +401,41 @@ class KaleidescapePlayer:
                 self._stop_position_updater()
 
     async def _handle_power_state(self):
-        _LOG.debug("Power State = %s", self.device.power.state)
+        """
+        Update the power state of the player using raw reported power only.
 
-        if self.device.power.state == DEVICE_POWER_STATE_ON:
-            self._attr_state = MediaStates.ON
-        elif self.device.power.state == DEVICE_POWER_STATE_STANDBY:
-            self._attr_state = MediaStates.STANDBY
+        Resolves to:
+            - ON: if power state is ON and connected
+            - STANDBY: if power state is STANDBY and connected
+            - UNAVAILABLE: if not connected
+            - UNKNOWN: if power state is None or unrecognized
+        Emits updates only when state has changed.
+        """
+        raw_power = getattr(self.device.power, "state", None)
+
+        _LOG.debug("Evaluating power state for device [%s]", self.device_id)
+        _LOG.debug("Connection: %s | Raw Power: %s", self._connected, raw_power)
+
+        if not self._connected:
+            resolved_state = MediaStates.UNAVAILABLE
+        elif raw_power == DEVICE_POWER_STATE_ON:
+            resolved_state = MediaStates.ON
+        elif raw_power == DEVICE_POWER_STATE_STANDBY:
+            resolved_state = MediaStates.STANDBY
+        elif raw_power is None:
+            resolved_state = MediaStates.UNKNOWN
         else:
-            self._attr_state = MediaStates.UNKNOWN
+            resolved_state = MediaStates.UNKNOWN
 
-        await self._emit_update(
-            EntityPrefix.MEDIA_PLAYER.value, MediaAttr.STATE, self.state)
-        await self._emit_update(
-            EntityPrefix.REMOTE.value, MediaAttr.STATE, self.state)
+        if resolved_state == self._attr_state:
+            _LOG.debug("State unchanged: %s", resolved_state)
+            return
+
+        _LOG.debug("State changed: %s -> %s", self._attr_state, resolved_state)
+        self._attr_state = resolved_state
+
+        await self._emit_update(EntityPrefix.MEDIA_PLAYER.value, MediaAttr.STATE, self.state)
+        await self._emit_update(EntityPrefix.REMOTE.value, MediaAttr.STATE, self.state)
 
     async def _handle_events(self, event: str):
         _LOG.warning("Event received: %s", event)

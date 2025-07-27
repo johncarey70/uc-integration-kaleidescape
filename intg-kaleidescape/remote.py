@@ -30,6 +30,7 @@ REMOTE_STATE_MAPPING = {
 }
 
 VALID_COMMANDS = frozenset({
+    "back"
     "cancel",
     "down",
     "go_movie_covers",
@@ -43,6 +44,7 @@ VALID_COMMANDS = frozenset({
     "scan_forward",
     "scan_reverse",
     "select",
+    "shuffle_cover_art"
     "up",
     "intermission",
 })
@@ -72,6 +74,7 @@ class KaleidescapeRemote(Remote):
     def create_button_mappings(self) -> list[DeviceButtonMapping | dict[str, Any]]:
         """Create button mappings."""
         return [
+            create_btn_mapping(Buttons.BACK, cmds.BACK),
             create_btn_mapping(Buttons.DPAD_UP, cmds.UP),
             create_btn_mapping(Buttons.DPAD_DOWN, cmds.DOWN),
             create_btn_mapping(Buttons.DPAD_LEFT, cmds.LEFT),
@@ -94,14 +97,15 @@ class KaleidescapeRemote(Remote):
         ui_page1 = UiPage("page1", "Power", grid=Size(6, 6))
         ui_page1.add(create_ui_text("Power On", 0, 0, size=Size(3, 1), cmd=Commands.ON))
         ui_page1.add(create_ui_text("Standby", 3, 0, size=Size(3, 1), cmd=Commands.OFF))
-        ui_page1.add(create_ui_text("Menu", 1, 1, size=Size(4, 1), cmd=cmds.MENU_TOGGLE))
-        ui_page1.add(create_ui_text("-- Show Movie Views --", 1, 2, size=Size(4, 1)))
+        ui_page1.add(create_ui_text("Intermission", 0, 1, size=Size(6, 1), cmd=cmds.INTERMISSION))
+        ui_page1.add(create_ui_text("*** OSD Control ***", 0, 2, size=Size(6, 1)))
         ui_page1.add(create_ui_text("Collections", 0, 3, size=Size(2, 1), cmd=cmds.MOVIE_COLLECTIONS))
         ui_page1.add(create_ui_text("Covers", 2, 3, size=Size(2, 1), cmd=cmds.MOVIE_COVERS))
         ui_page1.add(create_ui_text("List", 4, 3, size=Size(2, 1), cmd=cmds.MOVIE_LIST))
-        ui_page1.add(create_ui_text("Stop", 0, 4, size=Size(3, 1), cmd=cmds.STOP))
-        ui_page1.add(create_ui_text("Cancel", 3, 4, size=Size(3, 1), cmd=cmds.CANCEL))
-        ui_page1.add(create_ui_text("Intermission", 1, 5, size=Size(4, 1), cmd=cmds.INTERMISSION))
+        ui_page1.add(create_ui_text("Alphabetize", 0, 4, size=Size(2, 1), cmd=cmds.ALPHABETIZE_COVER_ART))
+        ui_page1.add(create_ui_text("Shuffle", 2, 4, size=Size(2, 1), cmd=cmds.SHUFFLE_COVER_ART))
+        ui_page1.add(create_ui_text("Cancel", 4, 4, size=Size(2, 1), cmd=cmds.CANCEL))
+
         return [ui_page1]
 
     async def command(self, cmd_id: str, params: dict[str, Any] | None = None) -> StatusCodes:
@@ -146,6 +150,10 @@ class KaleidescapeRemote(Remote):
                         simple_cmd = normalize_cmd(simple_cmd)
 
                         match simple_cmd:
+                            case cmds.ALPHABETIZE_COVER_ART:
+                                status = await self._device.alphabetize_cover_art()
+                            case cmds.BACK:
+                                status = await self._device.back()
                             case cmds.INTERMISSION:
                                 status = await self._device.intermission_toggle()
                             case cmds.MOVIE_COLLECTIONS:
@@ -156,6 +164,8 @@ class KaleidescapeRemote(Remote):
                                 status = await self._device.list()
                             case cmds.PLAY_PAUSE:
                                 status = await self._device.play_pause()
+                            case cmds.SHUFFLE_COVER_ART:
+                                status = await self._device.shuffle_cover_art()
                             case _:
                                 status = await self._device.send_command(simple_cmd)
 

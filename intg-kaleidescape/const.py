@@ -15,6 +15,8 @@ class EntityPrefix(str, Enum):
 class SimpleCommands(str, Enum):
     """Enumeration of supported remote command names for Kaleidescape control."""
 
+    ALPHABETIZE_COVER_ART = "alphabetize_cover_art"
+    BACK = "back"
     CANCEL = "cancel"
     DOWN = "down"
     EXIT = "exit"
@@ -36,6 +38,7 @@ class SimpleCommands(str, Enum):
     SAVE = "save"
     SCAN_FORWARD = "scan_forward"
     SCAN_REVERSE = "scan_reverse"
+    SHUFFLE_COVER_ART = "shuffle_cover_art"
     STOP = "stop"
     UP = "up"
 
@@ -45,7 +48,7 @@ class SimpleCommands(str, Enum):
         """
         Returns the display-friendly command name for use in UI or command APIs.
 
-        Special cases like PLAY_PAUSE are formatted as "Play/Pause".
+        Special cases like PLAY_PAUSE are formatted as "Play / Pause".
 
         :return: A display-safe string.
         """
@@ -56,8 +59,7 @@ class SimpleCommands(str, Enum):
         if self.name in special_cases:
             return special_cases[self.name]
 
-        parts = self.name.replace("_", " ").lower().split(maxsplit=1)
-        return parts[0].capitalize() + (f" {parts[1].capitalize()}" if len(parts) > 1 else "")
+        return " ".join(part.capitalize() for part in self.name.lower().split("_"))
 
 
 class MediaPlayerDef: # pylint: disable=too-few-public-methods
