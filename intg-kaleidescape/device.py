@@ -353,6 +353,16 @@ class KaleidescapePlayer:
         self._send_socket_command("01/6/SHUFFLE_COVER_ART:\r")
         return ucapi.StatusCodes.OK
 
+    async def movie_store(self) -> ucapi.StatusCodes:
+        """Trigger the 'go_movie_store' command."""
+        self._send_socket_command("01/6/GO_MOVIE_STORE:\r")
+        return ucapi.StatusCodes.OK
+
+    async def subtitles(self) -> ucapi.StatusCodes:
+        """Trigger the 'subtitles_next' command."""
+        self._send_socket_command("01/9/SUBTITLES_NEXT:\r")
+        return ucapi.StatusCodes.OK
+
     async def _on_event(self, event: str):
         """Handle device connection state changes based on incoming event."""
         if event == "":

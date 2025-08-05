@@ -29,25 +29,27 @@ REMOTE_STATE_MAPPING = {
     MediaStates.UNKNOWN: States.UNKNOWN,
 }
 
-VALID_COMMANDS = frozenset({
-    "back"
-    "cancel",
-    "down",
-    "go_movie_covers",
-    "left",
-    "menu_toggle",
-    "pause",
-    "play",
-    "play_pause",
-    "replay",
-    "right",
-    "scan_forward",
-    "scan_reverse",
-    "select",
-    "shuffle_cover_art"
-    "up",
-    "intermission",
-})
+# VALID_COMMANDS = frozenset({
+#     "back"
+#     "cancel",
+#     "down",
+#     "go_movie_covers",
+#     "left",
+#     "menu_toggle",
+#     "pause",
+#     "play",
+#     "play_pause",
+#     "replay",
+#     "right",
+#     "scan_forward",
+#     "scan_reverse",
+#     "select",
+#     "shuffle_cover_art"
+#     "up",
+#     "intermission",
+#     "subtitles",
+#     "movie_store"
+# })
 
 class KaleidescapeRemote(Remote):
     """Representation of a Kaleidescape Remote entity."""
@@ -74,21 +76,21 @@ class KaleidescapeRemote(Remote):
     def create_button_mappings(self) -> list[DeviceButtonMapping | dict[str, Any]]:
         """Create button mappings."""
         return [
-            create_btn_mapping(Buttons.BACK, cmds.BACK),
-            create_btn_mapping(Buttons.DPAD_UP, cmds.UP),
-            create_btn_mapping(Buttons.DPAD_DOWN, cmds.DOWN),
-            create_btn_mapping(Buttons.DPAD_LEFT, cmds.LEFT),
-            create_btn_mapping(Buttons.DPAD_RIGHT, cmds.RIGHT),
-            create_btn_mapping(Buttons.DPAD_MIDDLE, cmds.OK),
-            create_btn_mapping(Buttons.PREV, cmds.PREVIOUS),
-            create_btn_mapping(Buttons.PLAY, cmds.PLAY_PAUSE),
-            create_btn_mapping(Buttons.NEXT, cmds.NEXT),
+            create_btn_mapping(Buttons.BACK, cmds.BACK.display_name),
+            create_btn_mapping(Buttons.DPAD_UP, cmds.UP.display_name),
+            create_btn_mapping(Buttons.DPAD_DOWN, cmds.DOWN.display_name),
+            create_btn_mapping(Buttons.DPAD_LEFT, cmds.LEFT.display_name),
+            create_btn_mapping(Buttons.DPAD_RIGHT, cmds.RIGHT.display_name),
+            create_btn_mapping(Buttons.DPAD_MIDDLE, cmds.OK.display_name),
+            create_btn_mapping(Buttons.PREV, cmds.PREVIOUS.display_name),
+            create_btn_mapping(Buttons.PLAY, cmds.PLAY_PAUSE.display_name),
+            create_btn_mapping(Buttons.NEXT, cmds.NEXT.display_name),
             DeviceButtonMapping(
                 button="MENU",
-                short_press=EntityCommand(cmd_id=cmds.MENU_TOGGLE, params=None), long_press=None),
+                short_press=EntityCommand(cmd_id=cmds.MENU.display_name, params=None), long_press=None),
             DeviceButtonMapping(
                 button="STOP",
-                short_press=EntityCommand(cmd_id=cmds.STOP, params=None), long_press=None),
+                short_press=EntityCommand(cmd_id=cmds.STOP.display_name, params=None), long_press=None),
         ]
 
     def create_ui(self) -> list[UiPage | dict[str, Any]]:
@@ -97,14 +99,16 @@ class KaleidescapeRemote(Remote):
         ui_page1 = UiPage("page1", "Power", grid=Size(6, 6))
         ui_page1.add(create_ui_text("Power On", 0, 0, size=Size(3, 1), cmd=Commands.ON))
         ui_page1.add(create_ui_text("Standby", 3, 0, size=Size(3, 1), cmd=Commands.OFF))
-        ui_page1.add(create_ui_text("Intermission", 0, 1, size=Size(6, 1), cmd=cmds.INTERMISSION))
+        ui_page1.add(create_ui_text("Intermission", 0, 1, size=Size(6, 1), cmd=cmds.INTERMISSION.display_name))
         ui_page1.add(create_ui_text("*** OSD Control ***", 0, 2, size=Size(6, 1)))
-        ui_page1.add(create_ui_text("Collections", 0, 3, size=Size(2, 1), cmd=cmds.MOVIE_COLLECTIONS))
-        ui_page1.add(create_ui_text("Covers", 2, 3, size=Size(2, 1), cmd=cmds.MOVIE_COVERS))
-        ui_page1.add(create_ui_text("List", 4, 3, size=Size(2, 1), cmd=cmds.MOVIE_LIST))
-        ui_page1.add(create_ui_text("Alphabetize", 0, 4, size=Size(2, 1), cmd=cmds.ALPHABETIZE_COVER_ART))
-        ui_page1.add(create_ui_text("Shuffle", 2, 4, size=Size(2, 1), cmd=cmds.SHUFFLE_COVER_ART))
-        ui_page1.add(create_ui_text("Cancel", 4, 4, size=Size(2, 1), cmd=cmds.CANCEL))
+        ui_page1.add(create_ui_text("Collections", 0, 3, size=Size(2, 1), cmd=cmds.MOVIE_COLLECTIONS.display_name))
+        ui_page1.add(create_ui_text("Covers", 2, 3, size=Size(2, 1), cmd=cmds.MOVIE_COVERS.display_name))
+        ui_page1.add(create_ui_text("List", 4, 3, size=Size(2, 1), cmd=cmds.MOVIE_LIST.display_name))
+        ui_page1.add(create_ui_text("Alphabetize", 0, 4, size=Size(2, 1), cmd=cmds.ALPHABETIZE_COVER_ART.display_name))
+        ui_page1.add(create_ui_text("Shuffle", 2, 4, size=Size(2, 1), cmd=cmds.SHUFFLE_COVER_ART.display_name))
+        ui_page1.add(create_ui_text("Store", 4, 4, size=Size(2, 1), cmd=cmds.MOVIE_STORE.display_name))
+        ui_page1.add(create_ui_text("Cancel", 0, 5, size=Size(3, 1), cmd=cmds.CANCEL.display_name))
+        ui_page1.add(create_ui_text("Subtitles", 3, 5, size=Size(3, 1), cmd=cmds.SUBTITLES.display_name))
 
         return [ui_page1]
 
@@ -156,16 +160,22 @@ class KaleidescapeRemote(Remote):
                                 status = await self._device.back()
                             case cmds.INTERMISSION:
                                 status = await self._device.intermission_toggle()
+                            case cmds.MENU:
+                                status = await self._device.menu()
                             case cmds.MOVIE_COLLECTIONS:
                                 status = await self._device.collections()
                             case cmds.MOVIE_COVERS:
                                 status = await self._device.movie_covers()
                             case cmds.MOVIE_LIST:
                                 status = await self._device.list()
+                            case cmds.MOVIE_STORE:
+                                status = await self._device.movie_store()
                             case cmds.PLAY_PAUSE:
                                 status = await self._device.play_pause()
                             case cmds.SHUFFLE_COVER_ART:
                                 status = await self._device.shuffle_cover_art()
+                            case cmds.SUBTITLES:
+                                status = await self._device.subtitles()
                             case _:
                                 status = await self._device.send_command(simple_cmd)
 

@@ -34,7 +34,9 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 cmds.MOVIE_COLLECTIONS.display_name,
                 cmds.MOVIE_COVERS.display_name,
                 cmds.MOVIE_LIST.display_name,
-                cmds.SHUFFLE_COVER_ART.display_name
+                cmds.MOVIE_STORE.display_name,
+                cmds.SHUFFLE_COVER_ART.display_name,
+                cmds.SUBTITLES.display_name
             ]
         }
 
@@ -120,8 +122,12 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 res = await self._device.movie_covers()
             case cmds.MOVIE_LIST:
                 res = await self._device.list()
+            case cmds.MOVIE_STORE:
+                res = await self._device.movie_store()
             case cmds.SHUFFLE_COVER_ART:
                 res = await self._device.shuffle_cover_art()
+            case cmds.SUBTITLES:
+                res = await self._device.subtitles()
             case _:
                 _LOG.debug("Not Implemented: %s", cmd)
                 return StatusCodes.NOT_IMPLEMENTED

@@ -23,10 +23,11 @@ class SimpleCommands(str, Enum):
     INPUT = "input"
     INTERMISSION = "intermission"
     LEFT = "left"
-    MENU_TOGGLE = "menu_toggle"
+    MENU = "menu"
     MOVIE_COLLECTIONS = "movie_collections"
     MOVIE_COVERS = "movie_covers"
     MOVIE_LIST = "movie_list"
+    MOVIE_STORE = "movie_store"
     NEXT = "next"
     OK = "select"
     PAUSE = "pause"
@@ -39,6 +40,7 @@ class SimpleCommands(str, Enum):
     SCAN_FORWARD = "scan_forward"
     SCAN_REVERSE = "scan_reverse"
     SHUFFLE_COVER_ART = "shuffle_cover_art"
+    SUBTITLES = "subtitles"
     STOP = "stop"
     UP = "up"
 
@@ -85,7 +87,6 @@ class MediaPlayerDef: # pylint: disable=too-few-public-methods
         media_player.Features.MEDIA_TYPE,
         media_player.Features.HOME,
         media_player.Features.DPAD,
-        media_player.Features.CONTEXT_MENU,
         media_player.Features.MENU,
         media_player.Features.REWIND,
         media_player.Features.FAST_FORWARD,
