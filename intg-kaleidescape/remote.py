@@ -80,7 +80,8 @@ class KaleidescapeRemote(Remote):
         ui_page1 = UiPage("page1", "Power", grid=Size(6, 6))
         ui_page1.add(create_ui_text("Power On", 0, 0, size=Size(3, 1), cmd=Commands.ON))
         ui_page1.add(create_ui_text("Standby", 3, 0, size=Size(3, 1), cmd=Commands.OFF))
-        ui_page1.add(create_ui_text("Intermission", 0, 1, size=Size(6, 1), cmd=cmds.INTERMISSION.display_name))
+        ui_page1.add(create_ui_text("Intermission", 0, 1, size=Size(3, 1), cmd=cmds.INTERMISSION.display_name))
+        ui_page1.add(create_ui_text("Replay", 3, 1, size=Size(3, 1), cmd=cmds.REPLAY.display_name))
         ui_page1.add(create_ui_text("*** OSD Control ***", 0, 2, size=Size(6, 1)))
         ui_page1.add(create_ui_text("Collections", 0, 3, size=Size(2, 1), cmd=cmds.MOVIE_COLLECTIONS.display_name))
         ui_page1.add(create_ui_text("Covers", 2, 3, size=Size(2, 1), cmd=cmds.MOVIE_COVERS.display_name))
@@ -166,6 +167,8 @@ class KaleidescapeRemote(Remote):
                                 status = await self._device.page_up_release()
                             case cmds.PLAY_PAUSE:
                                 status = await self._device.play_pause()
+                            case cmds.REPLAY:
+                                status = await self._device.replay()
                             case cmds.SEARCH:
                                 status = await self._device.search()
                             case cmds.SHUFFLE_COVER_ART:

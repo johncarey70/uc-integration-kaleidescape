@@ -41,6 +41,7 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 cmds.PAGE_UP.display_name,
                 cmds.PAGE_UP_PRESS.display_name,
                 cmds.PAGE_UP_RELEASE.display_name,
+                cmds.REPLAY.display_name,
                 cmds.SEARCH.display_name,
                 cmds.SHUFFLE_COVER_ART.display_name,
                 cmds.SUBTITLES.display_name
@@ -143,6 +144,8 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 res = await self._device.page_up_press()
             case cmds.PAGE_UP_RELEASE:
                 res = await self._device.page_up_release()
+            case cmds.REPLAY:
+                res = await self._device.replay()
             case cmds.SEARCH:
                 res = await self._device.search()
             case cmds.SHUFFLE_COVER_ART:

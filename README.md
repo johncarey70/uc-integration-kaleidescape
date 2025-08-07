@@ -38,6 +38,7 @@ I suggest you either remove the other players from the network while configuring
 - Alphabetize
 - Page Up
 - Page Down
+- Replay
 
 ## Installation
 

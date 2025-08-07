@@ -371,6 +371,11 @@ class KaleidescapePlayer:
             _LOG.debug("Cannot send command: 'media_pause or media_play' device is powered off")
         return ucapi.StatusCodes.OK
 
+    async def replay(self) -> ucapi.StatusCodes:
+        """Trigger the 'replay' command."""
+        self._send_socket_command("01/6/REPLAY:\r")
+        return ucapi.StatusCodes.OK
+
     async def rewind(self) -> ucapi.StatusCodes:
         """Trigger the 'rewind' command."""
         if self.is_on:
