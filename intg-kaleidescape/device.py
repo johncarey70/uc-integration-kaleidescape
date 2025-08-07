@@ -317,9 +317,8 @@ class KaleidescapePlayer:
         return ucapi.StatusCodes.OK
 
     async def menu(self) -> ucapi.StatusCodes:
-        """Trigger the 'menu toggle' command."""
-        if self.is_on:
-            await self.device.menu_toggle()
+        """Trigger the 'disc_or_kaleidescape_menu' command."""
+        self._send_socket_command("01/6/DISC_OR_KALEIDESCAPE_MENU:\r")
         return ucapi.StatusCodes.OK
 
     async def movie_covers(self) -> ucapi.StatusCodes:
@@ -328,6 +327,36 @@ class KaleidescapePlayer:
             await self.send_command("go_movie_covers")
         else:
             _LOG.debug("Cannot send command: 'go_movie_covers' device is powered off")
+        return ucapi.StatusCodes.OK
+
+    async def page_up(self) -> ucapi.StatusCodes:
+        """Trigger the 'page_up' command."""
+        self._send_socket_command("01/6/PAGE_UP:\r")
+        return ucapi.StatusCodes.OK
+
+    async def page_up_press(self) -> ucapi.StatusCodes:
+        """Trigger the 'page_up_press' command."""
+        self._send_socket_command("01/6/PAGE_UP_PRESS:\r")
+        return ucapi.StatusCodes.OK
+
+    async def page_up_release(self) -> ucapi.StatusCodes:
+        """Trigger the 'page_up_release' command."""
+        self._send_socket_command("01/6/PAGE_UP_RELEASE:\r")
+        return ucapi.StatusCodes.OK
+
+    async def page_down(self) -> ucapi.StatusCodes:
+        """Trigger the 'page_down' command."""
+        self._send_socket_command("01/6/PAGE_DOWN:\r")
+        return ucapi.StatusCodes.OK
+
+    async def page_down_press(self) -> ucapi.StatusCodes:
+        """Trigger the 'page_down_press' command."""
+        self._send_socket_command("01/6/PAGE_DOWN_PRESS:\r")
+        return ucapi.StatusCodes.OK
+
+    async def page_down_release(self) -> ucapi.StatusCodes:
+        """Trigger the 'page_down_release' command."""
+        self._send_socket_command("01/6/PAGE_DOWN_RELEASE:\r")
         return ucapi.StatusCodes.OK
 
     async def play_pause(self) -> ucapi.StatusCodes:
@@ -356,6 +385,11 @@ class KaleidescapePlayer:
     async def movie_store(self) -> ucapi.StatusCodes:
         """Trigger the 'go_movie_store' command."""
         self._send_socket_command("01/6/GO_MOVIE_STORE:\r")
+        return ucapi.StatusCodes.OK
+
+    async def search(self) -> ucapi.StatusCodes:
+        """Trigger the 'go_search' command."""
+        self._send_socket_command("01/9/GO_SEARCH:\r")
         return ucapi.StatusCodes.OK
 
     async def subtitles(self) -> ucapi.StatusCodes:

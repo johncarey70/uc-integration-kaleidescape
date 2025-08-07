@@ -30,6 +30,12 @@ class SimpleCommands(str, Enum):
     MOVIE_STORE = "movie_store"
     NEXT = "next"
     OK = "select"
+    PAGE_DOWN = "page_down"
+    PAGE_DOWN_PRESS = "page_down_press"
+    PAGE_DOWN_RELEASE = "page_down_release"
+    PAGE_UP = "page_up"
+    PAGE_UP_PRESS = "page_up_press"
+    PAGE_UP_RELEASE = "page_up_release"
     PAUSE = "pause"
     PLAY = "play"
     PLAY_PAUSE = "play_pause"
@@ -39,6 +45,7 @@ class SimpleCommands(str, Enum):
     SAVE = "save"
     SCAN_FORWARD = "scan_forward"
     SCAN_REVERSE = "scan_reverse"
+    SEARCH = "search"
     SHUFFLE_COVER_ART = "shuffle_cover_art"
     SUBTITLES = "subtitles"
     STOP = "stop"
@@ -112,7 +119,7 @@ class RemoteDef: # pylint: disable=too-few-public-methods
     """
     features = [
         remote.Features.ON_OFF,
-        remote.Features.SEND_CMD,
+        remote.Features.SEND_CMD
     ]
     attributes = {
         remote.Attributes.STATE: remote.States.UNKNOWN,

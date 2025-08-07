@@ -29,27 +29,6 @@ REMOTE_STATE_MAPPING = {
     MediaStates.UNKNOWN: States.UNKNOWN,
 }
 
-# VALID_COMMANDS = frozenset({
-#     "back"
-#     "cancel",
-#     "down",
-#     "go_movie_covers",
-#     "left",
-#     "menu_toggle",
-#     "pause",
-#     "play",
-#     "play_pause",
-#     "replay",
-#     "right",
-#     "scan_forward",
-#     "scan_reverse",
-#     "select",
-#     "shuffle_cover_art"
-#     "up",
-#     "intermission",
-#     "subtitles",
-#     "movie_store"
-# })
 
 class KaleidescapeRemote(Remote):
     """Representation of a Kaleidescape Remote entity."""
@@ -85,6 +64,8 @@ class KaleidescapeRemote(Remote):
             create_btn_mapping(Buttons.PREV, cmds.PREVIOUS.display_name),
             create_btn_mapping(Buttons.PLAY, cmds.PLAY_PAUSE.display_name),
             create_btn_mapping(Buttons.NEXT, cmds.NEXT.display_name),
+            create_btn_mapping(Buttons.CHANNEL_DOWN, cmds.PAGE_DOWN.display_name),
+            create_btn_mapping(Buttons.CHANNEL_UP, cmds.PAGE_UP.display_name),
             DeviceButtonMapping(
                 button="MENU",
                 short_press=EntityCommand(cmd_id=cmds.MENU.display_name, params=None), long_press=None),
@@ -107,8 +88,9 @@ class KaleidescapeRemote(Remote):
         ui_page1.add(create_ui_text("Alphabetize", 0, 4, size=Size(2, 1), cmd=cmds.ALPHABETIZE_COVER_ART.display_name))
         ui_page1.add(create_ui_text("Shuffle", 2, 4, size=Size(2, 1), cmd=cmds.SHUFFLE_COVER_ART.display_name))
         ui_page1.add(create_ui_text("Store", 4, 4, size=Size(2, 1), cmd=cmds.MOVIE_STORE.display_name))
-        ui_page1.add(create_ui_text("Cancel", 0, 5, size=Size(3, 1), cmd=cmds.CANCEL.display_name))
-        ui_page1.add(create_ui_text("Subtitles", 3, 5, size=Size(3, 1), cmd=cmds.SUBTITLES.display_name))
+        ui_page1.add(create_ui_text("Cancel", 0, 5, size=Size(2, 1), cmd=cmds.CANCEL.display_name))
+        ui_page1.add(create_ui_text("Search", 2, 5, size=Size(2, 1), cmd=cmds.SEARCH.display_name))
+        ui_page1.add(create_ui_text("Subtitles", 4, 5, size=Size(2, 1), cmd=cmds.SUBTITLES.display_name))
 
         return [ui_page1]
 
@@ -161,7 +143,7 @@ class KaleidescapeRemote(Remote):
                             case cmds.INTERMISSION:
                                 status = await self._device.intermission_toggle()
                             case cmds.MENU:
-                                status = await self._device.menu()
+                                status = await self._device.menu_ks()
                             case cmds.MOVIE_COLLECTIONS:
                                 status = await self._device.collections()
                             case cmds.MOVIE_COVERS:
@@ -170,8 +152,22 @@ class KaleidescapeRemote(Remote):
                                 status = await self._device.list()
                             case cmds.MOVIE_STORE:
                                 status = await self._device.movie_store()
+                            case cmds.PAGE_DOWN:
+                                status = await self._device.page_down()
+                            case cmds.PAGE_DOWN_PRESS:
+                                status = await self._device.page_down_press()
+                            case cmds.PAGE_DOWN_RELEASE:
+                                status = await self._device.page_down_release()
+                            case cmds.PAGE_UP:
+                                status = await self._device.page_up()
+                            case cmds.PAGE_UP_PRESS:
+                                status = await self._device.page_up_press()
+                            case cmds.PAGE_UP_RELEASE:
+                                status = await self._device.page_up_release()
                             case cmds.PLAY_PAUSE:
                                 status = await self._device.play_pause()
+                            case cmds.SEARCH:
+                                status = await self._device.search()
                             case cmds.SHUFFLE_COVER_ART:
                                 status = await self._device.shuffle_cover_art()
                             case cmds.SUBTITLES:

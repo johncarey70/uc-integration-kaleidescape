@@ -35,6 +35,13 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 cmds.MOVIE_COVERS.display_name,
                 cmds.MOVIE_LIST.display_name,
                 cmds.MOVIE_STORE.display_name,
+                cmds.PAGE_DOWN.display_name,
+                cmds.PAGE_DOWN_PRESS.display_name,
+                cmds.PAGE_DOWN_RELEASE.display_name,
+                cmds.PAGE_UP.display_name,
+                cmds.PAGE_UP_PRESS.display_name,
+                cmds.PAGE_UP_RELEASE.display_name,
+                cmds.SEARCH.display_name,
                 cmds.SHUFFLE_COVER_ART.display_name,
                 cmds.SUBTITLES.display_name
             ]
@@ -124,6 +131,20 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 res = await self._device.list()
             case cmds.MOVIE_STORE:
                 res = await self._device.movie_store()
+            case cmds.PAGE_DOWN:
+                res = await self._device.page_down()
+            case cmds.PAGE_DOWN_PRESS:
+                res = await self._device.page_down_press()
+            case cmds.PAGE_DOWN_RELEASE:
+                res = await self._device.page_down_release()
+            case cmds.PAGE_UP:
+                res = await self._device.page_up()
+            case cmds.PAGE_UP_PRESS:
+                res = await self._device.page_up_press()
+            case cmds.PAGE_UP_RELEASE:
+                res = await self._device.page_up_release()
+            case cmds.SEARCH:
+                res = await self._device.search()
             case cmds.SHUFFLE_COVER_ART:
                 res = await self._device.shuffle_cover_art()
             case cmds.SUBTITLES:

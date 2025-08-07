@@ -31,8 +31,13 @@ I suggest you either remove the other players from the network while configuring
 - Movie Collections
 - Movie Covers
 - Movie List
+- Movie Store
+- Search
 - Shuffle
+- Subtitles
 - Alphabetize
+- Page Up
+- Page Down
 
 ## Installation
 
