@@ -1,0 +1,40 @@
+{
+  "driver_id": "kaleidescape",
+  "version": "2.0.0",
+  "min_core_api": "0.20.0",
+  "name": {
+    "en": "Kaleidescape"
+  },
+  "icon": "custom:kaleidescape.png",
+  "description": {
+    "en": "Control a Kaleidescape System with the Remote Two/3"
+  },
+  "port": 9086,
+  "developer": {
+    "name": "John J Carey",
+    "email": "hello@unfoldedcircle.com",
+    "url": "https://github.com/johncarey70/uc-integration-kaleidescape"
+  },
+  "home_page": "https://github.com/johncarey70/uc-integration-kaleidescape",
+  "release_date": "2026-04-10",
+  "setup_data_schema": {
+    "title": {
+      "en": "Integration Setup"
+    },
+    "settings": [
+      {
+        "id": "note",
+        "label": {
+          "en": "Notes"
+        },
+        "field": {
+          "label": {
+            "value": {
+              "en": "By clicking Next, the driver will automatically discover Kaleidescape systems and players on your local network. The system must be connected to the same network for discovery to succeed. If multiple players are found, you will be asked to select which one to use. If no devices are found, this indicates a network configuration issue that must be resolved before continuing."
+            }
+          }
+        }
+      }
+    ]
+  }
+}
