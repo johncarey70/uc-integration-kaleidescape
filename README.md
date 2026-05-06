@@ -3,7 +3,7 @@
 [![GitHub Release](https://img.shields.io/github/v/release/johncarey70/uc-integration-kaleidescape?style=flat-square)](https://github.com/johncarey70/uc-integration-kaleidescape/releases)
 ![License](https://img.shields.io/badge/license-MPL--2.0-blue?style=flat-square)
 [![GitHub issues](https://img.shields.io/github/issues/johncarey70/uc-integration-kaleidescape?style=flat-square)](https://github.com/johncarey70/uc-integration-kaleidescape/issues)
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/johncarey70/uc-integration-kaleidescape/total?style=flat-square)
+![GitHub Downloads](https://img.shields.io/github/downloads/johncarey70/uc-integration-kaleidescape/total.svg?label=downloads&style=flat-square)
 
 Control your **Kaleidescape Video Player** directly from your Unfolded Circle Remote Two or Remote 3.  
 A media player and remote entity are exposed to the Remote core.
