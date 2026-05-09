@@ -133,6 +133,10 @@ class KaleidescapeMediaPlayer(MediaPlayer):
                 res = await self._device.send_command("cancel")
             case cmds.DETAILS:
                 res = await self._device.send_command("details")
+            case cmds.FAVORITE_SCENE_END:
+                res = await self._device.send_command("favorite_scene_end")
+            case cmds.FAVORITE_SCENE_START:
+                res = await self._device.send_command("favorite_scene_start")
             case cmds.INTERMISSION:
                 res = await self._device.send_command("intermission_toggle")
             case cmds.MOVIE_COLLECTIONS:

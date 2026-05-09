@@ -10,7 +10,6 @@ Defines entity types, commands, and feature mappings.
 from enum import Enum
 
 from ucapi import media_player, remote
-from ucapi.media_player import Commands
 
 
 def format_command_label(cmd: str) -> str:
@@ -36,6 +35,8 @@ class SimpleCommands(str, Enum):
     DETAILS = "details"
     DOWN = "down"
     EXIT = "exit"
+    FAVORITE_SCENE_END = "favorite_scene_end"
+    FAVORITE_SCENE_START = "favorite_scene_start"
     INPUT = "input"
     INTERMISSION = "intermission"
     LEFT = "left"
@@ -125,6 +126,8 @@ class MediaPlayerDef:  # pylint: disable=too-few-public-methods
             SimpleCommands.ALPHABETIZE_COVER_ART.display_name,
             SimpleCommands.CANCEL.display_name,
             SimpleCommands.DETAILS.display_name,
+            SimpleCommands.FAVORITE_SCENE_END.display_name,
+            SimpleCommands.FAVORITE_SCENE_START.display_name,
             SimpleCommands.INTERMISSION.display_name,
             SimpleCommands.MOVIE_COLLECTIONS.display_name,
             SimpleCommands.MOVIE_COVERS.display_name,

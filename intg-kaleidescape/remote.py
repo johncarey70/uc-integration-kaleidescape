@@ -141,7 +141,28 @@ class KaleidescapeRemote(Remote):
             create_ui_text("Subtitles", 4, 5, size=Size(2, 1), cmd=cmds.SUBTITLES.display_name)
         )
 
-        return [ui_page1]
+        ui_page2 = UiPage("page2", "Fav Scene", grid=Size(6, 6))
+        ui_page2.add(create_ui_text("*** Favorite Scene ***", 0, 0, size=Size(6, 1)))
+        ui_page2.add(
+            create_ui_text(
+                "Scene Start",
+                0,
+                1,
+                size=Size(3, 1),
+                cmd=cmds.FAVORITE_SCENE_START.display_name,
+            )
+        )
+        ui_page2.add(
+            create_ui_text(
+                "Scene End",
+                3,
+                1,
+                size=Size(3, 1),
+                cmd=cmds.FAVORITE_SCENE_END.display_name,
+            )
+        )
+
+        return [ui_page1, ui_page2]
 
     async def command(
         self,
@@ -196,6 +217,10 @@ class KaleidescapeRemote(Remote):
                                 status = await self._device.send_command("cancel")
                             case cmds.DETAILS:
                                 status = await self._device.send_command("details")
+                            case cmds.FAVORITE_SCENE_END:
+                                status = await self._device.send_command("favorite_scene_end")
+                            case cmds.FAVORITE_SCENE_START:
+                                status = await self._device.send_command("favorite_scene_start")
                             case cmds.INTERMISSION:
                                 status = await self._device.send_command("intermission_toggle")
                             case cmds.MENU:
